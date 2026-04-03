@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bac Blanc NSI 2024 — Évaluation Interactive</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root{--bg:#f0f2f5;--card:#fff;--primary:#2c3e50;--accent:#e74c3c;--success:#27ae60;--danger:#c0392b;--warning:#f39c12;--text:#2c3e50;--tl:#7f8c8d;--border:#dfe6e9;--cbg:#282a36;--rad:12px;--sh:0 4px 18px rgba(0,0,0,.06)}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;user-select:none}
+/* ID Form */
+.id-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#2c3e50,#34495e);z-index:400;display:flex;justify-content:center;align-items:center;padding:20px}
+.id-overlay.hidden{display:none}
+.id-form{background:#fff;border-radius:20px;padding:40px;max-width:480px;width:100%;box-shadow:0 25px 60px rgba(0,0,0,.3);text-align:center}
+.id-form h2{color:var(--primary);margin-bottom:5px;font-size:1.4rem}
+.id-form .sub{color:var(--tl);font-size:.85rem;margin-bottom:25px}
+.id-form .field{margin-bottom:16px;text-align:left}
+.id-form label{display:block;font-weight:600;font-size:.85rem;margin-bottom:4px;color:var(--text)}
+.id-form input{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:8px;font-size:.9rem;transition:.3s;font-family:inherit}
+.id-form input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(44,62,80,.15)}
+.id-form input.error{border-color:var(--danger)}
+.id-form .err-msg{color:var(--danger);font-size:.75rem;margin-top:3px;display:none}
+.id-form .start-btn{background:linear-gradient(135deg,var(--primary),#34495e);color:#fff;border:none;padding:14px 40px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:.3s;margin-top:10px;width:100%}
+.id-form .start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(44,62,80,.3)}
+.id-form .warn{background:#fef9e7;border:1px solid #f9e79f;border-radius:8px;padding:10px;margin-top:15px;font-size:.78rem;color:#7d6608;text-align:left}
+/* Student badge */
+.student-badge{background:rgba(255,255,255,.2);padding:3px 10px;border-radius:8px;font-size:.7rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Header */
+.hdr{background:linear-gradient(135deg,#2c3e50,#e74c3c);color:#fff;padding:14px 22px;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(44,62,80,.3);display:none}
+.hdr.show{display:block}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.hdr h1{font-size:1rem;font-weight:700}.hdr .sub{opacity:.85;font-size:.7rem}
+.tmr{background:rgba(255,255,255,.15);border-radius:9px;padding:6px 14px;text-align:center;backdrop-filter:blur(5px)}.tmr .t{font-size:1.2rem;font-weight:700;font-variant-numeric:tabular-nums}.tmr .l{font-size:.56rem;text-transform:uppercase;letter-spacing:1px;opacity:.8}
+.tmr.w .t{color:#f39c12;animation:p 1s infinite}.tmr.d .t{color:#ff7675;animation:p .5s infinite}@keyframes p{0%,100%{opacity:1}50%{opacity:.5}}
+.ci{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.cc{background:rgba(255,255,255,.2);padding:3px 8px;border-radius:7px;font-size:.65rem}.cc.alert{background:rgba(231,76,60,.5);animation:p .5s infinite}
+/* Tabs */
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);padding:0 8px;overflow-x:auto;box-shadow:var(--sh);display:none}
+.tabs.show{display:flex}
+.tab{padding:10px 14px;cursor:pointer;border:none;background:none;font-size:.76rem;font-weight:600;color:var(--tl);position:relative;transition:.3s;white-space:nowrap}
+.tab:hover{color:var(--primary)}.tab.active{color:var(--primary)}.tab.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:3px;background:var(--primary);border-radius:3px 3px 0 0}
+.tab .b{background:var(--primary);color:#fff;border-radius:12px;padding:1px 6px;font-size:.58rem;margin-left:3px}.tab.done .b{background:var(--success)}
+/* Content */
+.ctn{max-width:1050px;margin:0 auto;padding:12px;display:none}.ctn.show{display:block}
+.pnl{display:none}.pnl.active{display:block}
+.exh{background:var(--card);border-radius:var(--rad);padding:18px;margin-bottom:12px;box-shadow:var(--sh);border-left:4px solid var(--primary)}.exh h2{font-size:1.05rem;color:var(--primary);margin-bottom:2px}.exh .th{font-style:italic;color:var(--tl);font-size:.8rem}.exh .pb{display:inline-block;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600;margin-top:5px}
+.ctx{background:var(--card);border-radius:var(--rad);padding:14px 18px;margin-bottom:10px;box-shadow:var(--sh);font-size:.82rem;border:1px solid var(--border)}
+.ctx code{background:#eaf2f8;padding:1px 4px;border-radius:3px;font-family:'Fira Code',monospace;font-size:.76rem;color:#2c3e50}
+.ctx pre{background:var(--cbg);color:#f8f8f2;padding:10px;border-radius:7px;overflow-x:auto;font-size:.76rem;margin:5px 0}.ctx pre code{background:none;color:inherit}
+.ctx table{border-collapse:collapse;width:100%;margin:6px 0;font-size:.75rem}.ctx th,.ctx td{border:1px solid #bdc3c7;padding:6px 8px;text-align:center}.ctx th{background:#ecf0f1;font-weight:600;color:var(--primary)}
+.ph{background:linear-gradient(135deg,rgba(44,62,80,.08),rgba(231,76,60,.04));padding:12px 16px;border-radius:9px;margin:14px 0 10px;border-left:4px solid var(--accent)}.ph h3{color:var(--accent);font-size:.92rem}
+.qc{background:var(--card);border-radius:var(--rad);padding:16px;margin-bottom:10px;box-shadow:var(--sh);border:2px solid transparent;transition:.3s}.qc:hover{border-color:rgba(44,62,80,.08)}.qc.ok{border-color:var(--success);background:#eafaf1}.qc.ko{border-color:var(--danger);background:#fdedec}
+.qt{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:6px}.qn{background:var(--primary);color:#fff;min-width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.64rem;flex-shrink:0;padding:0 4px}
+.qtx{flex:1;font-size:.82rem}.qtx code{background:#eaf2f8;padding:1px 4px;border-radius:3px;font-family:'Fira Code',monospace;font-size:.76rem;color:#2c3e50}
+.qtx pre{background:var(--cbg);color:#f8f8f2;padding:8px;border-radius:6px;overflow-x:auto;font-size:.74rem;margin:4px 0}.qtx pre code{background:none;color:inherit}
+.qp{background:#eaf2f8;color:var(--primary);padding:2px 7px;border-radius:10px;font-size:.62rem;font-weight:600;white-space:nowrap}
+.ans{margin-top:6px}.ans textarea{width:100%;min-height:60px;padding:8px;border:2px solid var(--border);border-radius:6px;font-size:.82rem;resize:vertical;font-family:inherit;transition:.3s;user-select:text}.ans textarea:focus{outline:none;border-color:var(--primary)}
+.cw{border:2px solid var(--border);border-radius:6px;overflow:hidden;transition:.3s}.cw:focus-within{border-color:var(--primary)}.cw .CodeMirror{height:auto;min-height:75px;font-size:.76rem}
+.cor{margin-top:8px;padding:10px;border-radius:6px;display:none}.cor.show{display:block}.cor.cok{background:#eafaf1;border:1px solid #a9dfbf}.cor.cko{background:#fdedec;border:1px solid #f5b7b1}
+.cor .ri{font-size:.82rem;font-weight:700;margin-bottom:3px}.cor h4{font-size:.68rem;color:var(--tl);margin-bottom:3px;text-transform:uppercase}.cor .ex{background:#d5f5e3;padding:7px;border-radius:5px;font-family:'Fira Code',monospace;font-size:.72rem;white-space:pre-wrap;margin:3px 0;border:1px solid #a9dfbf}.cor .ep{font-size:.76rem;color:var(--tl);margin-top:5px;padding:7px;background:rgba(44,62,80,.04);border-radius:5px;border-left:3px solid var(--primary)}
+.sub-sec{text-align:center;padding:22px 12px;margin-top:10px}
+.btn{padding:9px 18px;border:none;border-radius:7px;font-size:.84rem;font-weight:600;cursor:pointer;transition:.3s;display:inline-flex;align-items:center;gap:5px}
+.bp{background:var(--primary);color:#fff}.bp:hover{background:#1a252f;transform:translateY(-1px)}.bs{background:var(--success);color:#fff}.bo{background:transparent;border:2px solid var(--primary);color:var(--primary)}.bo:hover{background:var(--primary);color:#fff}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.ov{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:200;justify-content:center;align-items:center;padding:16px}.ov.show{display:flex}
+.mod{background:#fff;border-radius:16px;padding:26px;max-width:480px;width:100%;text-align:center;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.mod .gc{width:115px;height:115px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:12px auto;font-size:1.8rem;font-weight:800;color:#fff}
+.ge{background:linear-gradient(135deg,#27ae60,#229954)}.gb{background:linear-gradient(135deg,#2980b9,#3498db)}.gab{background:linear-gradient(135deg,#f39c12,#e67e22)}.gp{background:linear-gradient(135deg,#f1c40f,#f39c12)}.gi{background:linear-gradient(135deg,#c0392b,#e74c3c)}
+.gc small{font-size:.68rem;font-weight:400;opacity:.9}.mod .ap{font-size:1rem;font-weight:700;margin:6px 0}.mod .pct{font-size:.82rem;color:var(--tl)}
+.esc{text-align:left;margin:12px 0;padding:9px;background:#f8f9fa;border-radius:8px}.esc .sr{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)}.esc .sr:last-child{border:none}.pbr{height:6px;background:#ecf0f1;border-radius:3px;overflow:hidden;margin-top:3px}.pbr .fill{height:100%;border-radius:3px;transition:width .8s ease}
+.bg{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}.locked .ans textarea,.locked .CodeMirror{opacity:.7;pointer-events:none}
+.cheat-ov{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(231,76,60,.95);z-index:300;justify-content:center;align-items:center;flex-direction:column;color:#fff;text-align:center;padding:26px}.cheat-ov.show{display:flex}.cheat-ov h2{font-size:1.6rem;margin-bottom:10px}.cheat-ov p{font-size:.9rem;max-width:440px;margin-bottom:10px}.cheat-ov .wc{font-size:2.4rem;font-weight:800;background:rgba(255,255,255,.2);width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:8px auto}
+/* SVG Graph Styles */
+.svg-graph{width:100%;max-width:500px;margin:10px auto;display:block}
+.node-circle{fill:#3498db;stroke:#2c3e50;stroke-width:2px}
+.node-text{fill:#fff;font-size:14px;font-weight:bold;text-anchor:middle;dominant-baseline:central}
+.edge-line{stroke:#7f8c8d;stroke-width:2px}
+@media(max-width:768px){.hdr-top{flex-direction:column;text-align:center}.tab{padding:8px 9px;font-size:.7rem}.ctn{padding:7px}.id-form{padding:28px}}
+</style>
+</head>
+<body>
+
+<!-- ===== STUDENT ID FORM ===== -->
+<div class="id-overlay" id="idOverlay">
+<div class="id-form">
+<h2>🎓 Bac Blanc NSI 2024</h2>
+<div class="sub">Identification de l'élève — Obligatoire avant de commencer</div>
+<div class="field"><label>👤 Nom de famille *</label><input type="text" id="studentNom" placeholder="Ex: DUPONT" required><div class="err-msg" id="errNom">Veuillez saisir votre nom</div></div>
+<div class="field"><label>👤 Prénom *</label><input type="text" id="studentPrenom" placeholder="Ex: Marie" required><div class="err-msg" id="errPrenom">Veuillez saisir votre prénom</div></div>
+<div class="field"><label>📧 Adresse e-mail *</label><input type="email" id="studentEmail" placeholder="Ex: marie.dupont@ecole.fr" required><div class="err-msg" id="errEmail">Veuillez saisir un e-mail valide</div></div>
+<button class="start-btn" onclick="validateAndStart()">🚀 Commencer l'épreuve en plein écran</button>
+<div class="warn">⚠️ <strong>Anti-triche activé :</strong> Toute tentative de changer d'onglet, quitter le plein écran ou utiliser les outils développeur sera détectée. Après <strong>3 avertissements</strong>, votre copie sera automatiquement soumise.</div>
+</div>
+</div>
+
+<!-- CHEAT WARNING -->
+<div class="cheat-ov" id="cheatOv">
+<h2>⚠️ TRICHE DÉTECTÉE</h2>
+<div class="wc" id="warnD">1</div>
+<p>Vous avez quitté la fenêtre d'examen.</p>
+<p>Il vous reste <strong><span id="warnR">2</span></strong> avertissement(s).</p>
+<button class="btn" onclick="dismissCheat()" style="background:#fff;color:#e74c3c;font-size:.9rem;padding:11px 24px;margin-top:8px">Revenir à l'examen</button>
+</div>
+
+<!-- HEADER -->
+<div class="hdr" id="mainHeader"><div class="hdr-top">
+<div><h1>📝 Bac Blanc NSI 2024</h1><div class="sub">3 exercices — 3h30</div></div>
+<div class="tmr" id="timerBox"><div class="l">⏱ Temps</div><div class="t" id="timerDisplay">03:30:00</div></div>
+<div class="ci">
+<div class="student-badge" id="studentBadge">👤 —</div>
+<div class="cc" id="cheatBadge">🛡️ <span id="cheatCount">0</span>/3</div>
+</div>
+</div></div>
+
+<div class="tabs" id="mainTabs">
+<button class="tab active" data-tab="0" onclick="switchTab(0)">🛒 Ex.1 POO/Data <span class="b">7</span></button>
+<button class="tab" data-tab="1" onclick="switchTab(1)">🏎️ Ex.2 SQL F1 <span class="b">6.5</span></button>
+<button class="tab" data-tab="2" onclick="switchTab(2)">🕸️ Ex.3 Graphes/OS <span class="b">6.5</span></button>
+</div>
+
+<div class="ctn" id="mainContainer">
+
+<!-- ===== EX 1 — POO & DATA ===== -->
+<div class="pnl active" id="panel0">
+<div class="exh"><h2>Exercice 1 — POO & Analyse de données</h2><div class="th">Classes Produit/Facture, Dictionnaires, CSV</div><span class="pb">7 points</span></div>
+
+<div class="ph"><h3>Partie A : Classe Produit & Facture</h3></div>
+<div class="ctx">
+<p>Classe <code>Produit</code> (Prix, Quantité, Catégorie). Classe <code>Facture</code> (liste de produits LP).</p>
+<pre><code>class Produit:
+    def __init__(self, P, Q, C):
+        self.Prix = P
+        self.Quantite = Q
+        self.Categorie = C
+    def Total_Produit(self):
+        # à compléter</code></pre>
+</div>
+
+<div class="qc" id="card_e1q1"><div class="qt"><div class="qn">A1</div><div class="qtx">Écrire le code de la méthode <code>Total_Produit</code>.</div><div class="qp">0.5</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e1q1" class="code-editor" data-mode="python"></textarea></div></div><div class="cor" id="corr_e1q1"></div></div>
+
+<div class="qc" id="card_e1q2"><div class="qt"><div class="qn">A2</div><div class="qtx">Un client achète 6 produits (voir énoncé).<br><strong>a)</strong> Créer les objets P1 (biscuits) et P2 (piles).<br><strong>b)</strong> Afficher le prix total de P1.</div><div class="qp">1</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e1q2" class="code-editor" data-mode="python"></textarea></div></div><div class="cor" id="corr_e1q2"></div></div>
+
+<div class="qc" id="card_e1q3"><div class="qt"><div class="qn">A3</div><div class="qtx">Compléter la méthode <code>Total_categorie(self, cat)</code> de la classe Facture.
+<pre><code>def Total_categorie(self, cat):
+    s = 0
+    for p in self.LP:
+        if ...............:
+            s = s + ............
+    return ............</code></pre></div><div class="qp">1</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e1q3" class="code-editor" data-mode="python"></textarea></div></div><div class="cor" id="corr_e1q3"></div></div>
+
+<div class="qc" id="card_e1q4"><div class="qt"><div class="qn">A4</div><div class="qtx">Créer une facture F1 et y ajouter les 6 produits (P1 à P6).</div><div class="qp">0.5</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e1q4" class="code-editor" data-mode="python"></textarea></div></div><div class="cor" id="corr_e1q4"></div></div>
+
+<div class="qc" id="card_e1q5"><div class="qt"><div class="qn">A5</div><div class="qtx">Compléter la fonction <code>total_facture(F, LC)</code> qui renvoie la somme totale pour une liste de catégories LC.
+<pre><code>def total_facture(F, LC):
+    s = 0
+    for i in ............:
+        s = s + ............
+    return s</code></pre></div><div class="qp">1</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e1q5" class="code-editor" data-mode="python"></textarea></div></div><div class="cor" id="corr_e1q5"></div></div>
+
+<div class="ph"><h3>Partie B : Consommation électrique (Martin)</h3></div>
+<div class="ctx">
+<p>Données CSV <code>consommations_martin.csv</code> (Jour, Date, Année, Conso).</p>
+<table><tr><th>Jour</th><th>Date</th><th>Année</th><th>Conso</th></tr>
+<tr><td>Mardi</td><td>03/01</td><td>23</td><td>6,8</td></tr>
+<tr><td>Lundi</td><td>02/01</td><td>23</td><td>8,5</td></tr>
+<tr><td>Dimanche</td><td>01/01</td><td>23</td><td>7,5</td></tr>
+<tr><td>Samedi</td><td>31/12</td><td>22</td><td>10</td></tr>
+<tr><td>Vendredi</td><td>30/12</td><td>22</td><td>9,6</td></tr>
+<tr><td>Jeudi</td><td>29/12</td><td>22</td><td>8</td></tr>
+<tr><td>Mercredi</td><td>28/12</td><td>22</td><td>8,1</td></tr>
+<tr><td>Mardi</td><td>27/12</td><td>22</td><td>11,1</td></tr></table>
+<p>Données importées dans <code>consommations_martin</code> (liste de dictionnaires).</p>
+</div>
+
+<div class="qc" id="card_e1q6"><div class="qt"><div class="qn">B1</div><div class="qtx">Que vaut <code>consommations_martin[0]</code> ? Quel est son type ?</div><div class="qp">0.25</div></div>
+<div class="ans"><textarea id="ans_e1q6" placeholder="Valeur et type..."></textarea></div><div class="cor" id="corr_e1q6"></div></div>
+
+<div class="qc" id="card_e1q7"><div class="qt"><div class="qn">B2</div><div class="qtx">Écrire la fonction <code>week_end(jour)</code> qui renvoie True si c'est samedi ou dimanche.</div><div class="qp">0.5</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e1q7" class="code-editor" data-mode="python"></textarea></div></div><div class="cor" id="corr_e1q7"></div></div>
+
+<div class="qc" id="card_e1q8"><div class="qt"><div class="qn">B3</div><div class="qtx">Compléter <code>conso_maximale(consommations)</code> qui renvoie (date, année) de la conso max.
+<pre><code>def conso_maximale(consommations):
+    date = None
+    annee = None
+    res_maxi = 0
+    for x in consommations:
+        if ....................:
+            res_maxi = ............
+            date = ............
+            annee = ............
+    return (date, annee)</code></pre></div><div class="qp">1</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e1q8" class="code-editor" data-mode="python"></textarea></div></div><div class="cor" id="corr_e1q8"></div></div>
+
+<div class="qc" id="card_e1q9"><div class="qt"><div class="qn">B4</div><div class="qtx">Compléter <code>consommations_jours(consommations)</code> qui renvoie un dict {Jour: TotalConso2022}.
+<pre><code>def consommations_jours(consommations):
+    res = {} # ou dict()
+    for v in consommations:
+        j = v['Jour']
+        if v['Année'] == 22: # Filtre 2022
+            if j in res:
+                res[j] = ............
+            else:
+                res[j] = ............
+    return res</code></pre></div><div class="qp">1.25</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e1q9" class="code-editor" data-mode="python"></textarea></div></div><div class="cor" id="corr_e1q9"></div></div>
+
+<div style="text-align:right;margin-top:8px"><button class="btn bp" onclick="switchTab(1)">Ex.2 →</button></div>
+</div>
+
+<!-- ===== EX 2 — SQL F1 ===== -->
+<div class="pnl" id="panel1">
+<div class="exh"><h2>Exercice 2 — Base de données F1</h2><div class="th">SQL : SELECT, INSERT, UPDATE, DELETE, JOIN</div><span class="pb">6.5 points</span></div>
+<div class="ctx">
+<p>Tables : <strong>MARQUEAUTO</strong>, <strong>PILOTE</strong>, <strong>CIRCUIT</strong>, <strong>VICTOIRE</strong>.</p>
+<table><tr><th colspan="2">MARQUEAUTO</th><th colspan="3">PILOTE</th></tr>
+<tr><th>CodeMarq</th><th>LibMarq</th><th>IdPilote</th><th>NomPilote</th><th>DateNais</th></tr>
+<tr><td>M001</td><td>Ferrari</td><td>P001</td><td>Lewis HAMILTON</td><td>07/01/1985</td></tr>
+<tr><td>M002</td><td>Mercedes</td><td>P002</td><td>Sergio PEREZ</td><td>26/01/1990</td></tr>
+<tr><td>M003</td><td>Alpine</td><td>P003</td><td>Esteban OCAN</td><td>17/09/1996</td></tr>
+<tr><td>M004</td><td>Red Bull</td><td>P004</td><td>Max VERSTAPPEN</td><td>30/09/1997</td></tr></table>
+<table><tr><th colspan="5">CIRCUIT</th></tr>
+<tr><th>CodeCircuit</th><th>NomCir</th><th>PaysCir</th><th>NbTours</th><th>LongCir</th></tr>
+<tr><td>C001</td><td>Circuit de Sakhir</td><td>Bahreïn</td><td>57</td><td>5412</td></tr>
+<tr><td>C002</td><td>Circuit de Losail</td><td>Qatar</td><td>57</td><td>5380</td></tr>
+<tr><td>C003</td><td>Hungaroring</td><td>Hongrie</td><td>70</td><td>4381</td></tr>
+<tr><td>C004</td><td>Circuit Yas Marina</td><td>Emirats</td><td>58</td><td>5281</td></tr></table>
+<table><tr><th colspan="5">VICTOIRE</th></tr>
+<tr><th>IdPilote</th><th>CodeCircuit</th><th>Annee</th><th>TempsRealise</th><th>CodeMarq</th></tr>
+<tr><td>P001</td><td>C001</td><td>2021</td><td>1:32:03</td><td>M002</td></tr>
+<tr><td>P001</td><td>C002</td><td>2021</td><td>1:24:28</td><td>M002</td></tr>
+<tr><td>P002</td><td>C004</td><td>2021</td><td>2:13:36</td><td>M004</td></tr>
+<tr><td>P003</td><td>C003</td><td>2021</td><td>2:04:43</td><td>M003</td></tr>
+<tr><td>P001</td><td>C001</td><td>2022</td><td>1:27:23</td><td>M002</td></tr></table>
+</div>
+
+<div class="qc" id="card_e2q1"><div class="qt"><div class="qn">1a</div><div class="qtx">Pour la relation VICTOIRE, indiquer si les propositions suivantes peuvent être clé primaire :<br>• IdPilote<br>• (IdPilote, CodeCircuit)<br>• (IdPilote, CodeCircuit, Annee)</div><div class="qp">1.5</div></div>
+<div class="ans"><textarea id="ans_e2q1" placeholder="Justification pour chaque proposition..."></textarea></div><div class="cor" id="corr_e2q1"></div></div>
+
+<div class="qc" id="card_e2q2"><div class="qt"><div class="qn">1b</div><div class="qtx">Citer une contrainte d'intégrité de domaine, une de relation et une de référence pour VICTOIRE.</div><div class="qp">1</div></div>
+<div class="ans"><textarea id="ans_e2q2" placeholder="Domaine : ...&#10;Relation : ...&#10;Référence : ..."></textarea></div><div class="cor" id="corr_e2q2"></div></div>
+
+<div class="qc" id="card_e2q3"><div class="qt"><div class="qn">2</div><div class="qtx">Nouveau circuit "Djeddah" (C050, Arabie Saoudite, 50 tours, 6175m). Victoire de Lewis Hamilton (P001) en 2021 (2h06m15s, M002). Écrire les requêtes INSERT.</div><div class="qp">1</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e2q3" class="code-editor" data-mode="sql"></textarea></div></div><div class="cor" id="corr_e2q3"></div></div>
+
+<div class="qc" id="card_e2q4"><div class="qt"><div class="qn">3a</div><div class="qtx">Afficher les noms des circuits et pays hôtes composés de plus de 60 tours.</div><div class="qp">0.5</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e2q4" class="code-editor" data-mode="sql"></textarea></div></div><div class="cor" id="corr_e2q4"></div></div>
+
+<div class="qc" id="card_e2q5"><div class="qt"><div class="qn">3b</div><div class="qtx">Afficher la liste des circuits (NomCir, PaysCir, NbTours, LongCir) où Ferrari a gagné en 2021.</div><div class="qp">0.75</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e2q5" class="code-editor" data-mode="sql"></textarea></div></div><div class="cor" id="corr_e2q5"></div></div>
+
+<div class="qc" id="card_e2q6"><div class="qt"><div class="qn">3c</div><div class="qtx">Afficher la longueur moyenne des circuits où Michael Schumacher a gagné.</div><div class="qp">0.75</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e2q6" class="code-editor" data-mode="sql"></textarea></div></div><div class="cor" id="corr_e2q6"></div></div>
+
+<div class="qc" id="card_e2q7"><div class="qt"><div class="qn">4</div><div class="qtx">Supprimer les victoires avant l'an 2000.</div><div class="qp">0.5</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e2q7" class="code-editor" data-mode="sql"></textarea></div></div><div class="cor" id="corr_e2q7"></div></div>
+
+<div class="qc" id="card_e2q8"><div class="qt"><div class="qn">5</div><div class="qtx">L'écurie "Alpha Tauri" devient "Visa Cash App RB". Écrire la requête UPDATE.</div><div class="qp">0.5</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e2q8" class="code-editor" data-mode="sql"></textarea></div></div><div class="cor" id="corr_e2q8"></div></div>
+
+<div style="display:flex;justify-content:space-between;margin-top:8px"><button class="btn bo" onclick="switchTab(0)">← Ex.1</button><button class="btn bp" onclick="switchTab(2)">Ex.3 →</button></div>
+</div>
+
+<!-- ===== EX 3 — GRAPHES & OS ===== -->
+<div class="pnl" id="panel2">
+<div class="exh"><h2>Exercice 3 — Graphes & Systèmes d'exploitation</h2><div class="th">Parcours de graphes, Ordonnancement (Tourniquet, SRTF)</div><span class="pb">6.5 points</span></div>
+
+<div class="ph"><h3>Partie A : Les graphes</h3></div>
+<div class="ctx">
+<p>Graphe G non orienté. Sommets : A, B, C, D, E, F, G, H, I.</p>
+<!-- SVG Graph -->
+<svg class="svg-graph" viewBox="0 0 400 300">
+  <!-- Edges -->
+  <line x1="200" y1="150" x2="200" y2="50" class="edge-line"/> <!-- A-B -->
+  <line x1="200" y1="150" x2="300" y2="150" class="edge-line"/> <!-- A-C -->
+  <line x1="200" y1="150" x2="100" y2="150" class="edge-line"/> <!-- A-D -->
+  <line x1="200" y1="150" x2="200" y2="250" class="edge-line"/> <!-- A-E -->
+  <line x1="200" y1="50" x2="100" y2="150" class="edge-line"/> <!-- B-D -->
+  <line x1="200" y1="50" x2="300" y2="150" class="edge-line"/> <!-- B-C -->
+  <line x1="300" y1="150" x2="200" y2="250" class="edge-line"/> <!-- C-E -->
+  <line x1="100" y1="150" x2="200" y2="250" class="edge-line"/> <!-- D-E -->
+  <line x1="200" y1="50" x2="350" y2="100" class="edge-line"/> <!-- B-G -->
+  <line x1="350" y1="100" x2="300" y2="150" class="edge-line"/> <!-- G-C -->
+  <line x1="350" y1="100" x2="200" y2="20" class="edge-line"/> <!-- G-F -->
+  <line x1="200" y1="20" x2="200" y2="50" class="edge-line"/> <!-- F-B -->
+  <line x1="100" y1="150" x2="20" y2="150" class="edge-line"/> <!-- D-H -->
+  <line x1="200" y1="250" x2="200" y2="280" class="edge-line"/> <!-- E-I -->
+  
+  <!-- Nodes -->
+  <circle cx="200" cy="150" r="15" class="node-circle"/><text x="200" y="150" class="node-text">A</text>
+  <circle cx="200" cy="50" r="15" class="node-circle"/><text x="200" y="50" class="node-text">B</text>
+  <circle cx="300" cy="150" r="15" class="node-circle"/><text x="300" y="150" class="node-text">C</text>
+  <circle cx="100" cy="150" r="15" class="node-circle"/><text x="100" y="150" class="node-text">D</text>
+  <circle cx="200" cy="250" r="15" class="node-circle"/><text x="200" y="250" class="node-text">E</text>
+  <circle cx="200" cy="20" r="15" class="node-circle"/><text x="200" y="20" class="node-text">F</text>
+  <circle cx="350" cy="100" r="15" class="node-circle"/><text x="350" y="100" class="node-text">G</text>
+  <circle cx="20" cy="150" r="15" class="node-circle"/><text x="20" y="150" class="node-text">H</text>
+  <circle cx="200" cy="280" r="15" class="node-circle"/><text x="200" y="280" class="node-text">I</text>
+</svg>
+</div>
+
+<div class="qc" id="card_e3q1"><div class="qt"><div class="qn">A1</div><div class="qtx">Proposer une implémentation en Python du graphe G à l'aide d'un dictionnaire.</div><div class="qp">0.5</div></div>
+<div class="ans"><div class="cw"><textarea id="ans_e3q1" class="code-editor" data-mode="python"></textarea></div></div><div class="cor" id="corr_e3q1"></div></div>
+
+<div class="qc" id="card_e3q2"><div class="qt"><div class="qn">A2</div><div class="qtx">Donner le résultat retourné pour chaque appel (voisins parcourus par ordre alphabétique) :<br><strong>a)</strong> <code>Parcours1(G, 'F')</code> (DFS récursif)<br><strong>b)</strong> <code>Parcours2(G, 'H')</code> (BFS)<br><strong>c)</strong> <code>Parcours3(G, 'I')</code> (DFS itératif avec pile)</div><div class="qp">3</div></div>
+<div class="ans"><textarea id="ans_e3q2" placeholder="a) ...&#10;b) ...&#10;c) ..."></textarea></div><div class="cor" id="corr_e3q2"></div></div>
+
+<div class="ph"><h3>Partie B : Ordonnancement de processus</h3></div>
+<div class="ctx">
+<p>4 processus (P1, P2, P3, P4). Arrivée et Durée (cycles).</p>
+<table><tr><th>Processus</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th></tr>
+<tr><td>Arrivée</td><td>0</td><td>2</td><td>3</td><td>7</td></tr>
+<tr><td>Durée</td><td>7</td><td>5</td><td>3</td><td>2</td></tr></table>
+</div>
+
+<div class="qc" id="card_e3q3"><div class="qt"><div class="qn">B1a</div><div class="qtx">Ordonnancement par <strong>Tourniquet (Round Robin)</strong>, quantum = 1. Remplir le diagramme de Gantt (0 à 18).</div><div class="qp">1.5</div></div>
+<div class="ans"><textarea id="ans_e3q3" placeholder="Séquence d'exécution (ex: P1, P1, P2...)"></textarea></div><div class="cor" id="corr_e3q3"></div></div>
+
+<div class="qc" id="card_e3q4"><div class="qt"><div class="qn">B1b</div><div class="qtx">Ordonnancement <strong>Shortest Remaining Time First (SRTF)</strong> préemptif (quantum = 1 cycle). Remplir le diagramme de Gantt.</div><div class="qp">1.5</div></div>
+<div class="ans"><textarea id="ans_e3q4" placeholder="Séquence d'exécution..."></textarea></div><div class="cor" id="corr_e3q4"></div></div>
+
+<div style="text-align:left;margin-top:8px"><button class="btn bo" onclick="switchTab(1)">← Ex.2</button></div>
+</div>
+
+<div class="sub-sec"><div style="max-width:400px;margin:0 auto;padding:20px;background:var(--card);border-radius:var(--rad);box-shadow:var(--sh)">
+<h2 style="margin-bottom:5px;font-size:1rem">📩 Soumettre</h2>
+<p style="color:var(--tl);font-size:.76rem;margin-bottom:12px">Réponses verrouillées après soumission.</p>
+<button class="btn bp" id="submitBtn" onclick="submitExam()" style="font-size:.9rem;padding:11px 28px">📝 Soumettre ma copie</button>
+</div></div>
+</div>
+
+<div class="ov" id="resultsOverlay"><div class="mod"><h2>📊 Résultats</h2>
+<div id="studentResult" style="font-size:.8rem;color:var(--tl);margin-bottom:6px"></div>
+<div class="gc" id="gradeCircle"><span id="gradeNote">--</span><small>/20</small></div>
+<div class="ap" id="appreciation">--</div><div class="pct" id="percentage">--</div>
+<div class="esc" id="exerciseScores"></div>
+<div class="bg"><button class="btn bp" onclick="closeResults()">📋 Correction</button><button class="btn bs" onclick="exportPDF()">📄 PDF</button></div>
+</div></div>
+
+<script>
+let cheatWarnings=0,examStarted=false,isSubmitted=false,editors={},timerInterval,remainingSeconds=3*3600+30*60;
+let studentName='',studentFirst='',studentMail='';
+const MX=3,SK='nsi_bb_2024';
+
+function validateAndStart(){
+const n=document.getElementById('studentNom'),p=document.getElementById('studentPrenom'),e=document.getElementById('studentEmail');
+let valid=true;
+[['studentNom','errNom'],['studentPrenom','errPrenom'],['studentEmail','errEmail']].forEach(([id,eid])=>{
+const el=document.getElementById(id),err=document.getElementById(eid);
+if(!el.value.trim()||(id==='studentEmail'&&!el.value.includes('@'))){el.classList.add('error');err.style.display='block';valid=false}else{el.classList.remove('error');err.style.display='none'}
+});
+if(!valid)return;
+studentName=n.value.trim().toUpperCase();studentFirst=p.value.trim();studentMail=e.value.trim();
+document.getElementById('studentBadge').textContent=`👤 ${studentFirst} ${studentName}`;
+document.getElementById('idOverlay').classList.add('hidden');
+document.getElementById('mainHeader').classList.add('show');
+document.getElementById('mainTabs').classList.add('show');
+document.getElementById('mainContainer').classList.add('show');
+const el=document.documentElement;if(el.requestFullscreen)el.requestFullscreen();
+examStarted=true;startTimer();
+}
+
+document.addEventListener('visibilitychange',()=>{if(examStarted&&!isSubmitted&&document.hidden)triggerCheat()});
+window.addEventListener('blur',()=>{if(examStarted&&!isSubmitted)triggerCheat()});
+document.addEventListener('fullscreenchange',()=>{if(examStarted&&!isSubmitted&&!document.fullscreenElement)triggerCheat()});
+document.addEventListener('contextmenu',e=>{if(examStarted&&!isSubmitted)e.preventDefault()});
+document.addEventListener('keydown',e=>{if(!examStarted||isSubmitted)return;if((e.ctrlKey||e.metaKey)&&['t','n','w'].includes(e.key)){e.preventDefault();triggerCheat()}if(e.key==='F12'){e.preventDefault();triggerCheat()}if((e.ctrlKey||e.metaKey)&&e.shiftKey&&['I','J','C'].includes(e.key.toUpperCase())){e.preventDefault();triggerCheat()}});
+
+function triggerCheat(){if(isSubmitted)return;cheatWarnings++;document.getElementById('cheatCount').textContent=cheatWarnings;document.getElementById('cheatBadge').classList.add('alert');setTimeout(()=>document.getElementById('cheatBadge').classList.remove('alert'),3000);if(cheatWarnings>=MX){document.getElementById('cheatOv').classList.remove('show');alert(`🚫 SOUMISSION AUTOMATIQUE — ${studentFirst} ${studentName}\n3 avertissements atteints.`);submitExam(true);return}document.getElementById('warnD').textContent=cheatWarnings;document.getElementById('warnR').textContent=MX-cheatWarnings;document.getElementById('cheatOv').classList.add('show')}
+function dismissCheat(){document.getElementById('cheatOv').classList.remove('show');if(!document.fullscreenElement)document.documentElement.requestFullscreen?.()}
+
+const ED=[
+{title:"Ex.1 POO/Data",points:7,questions:[
+{id:"e1q1",pts:.5,type:"code",answer:"def Total_Produit(self):\n    return self.Prix * self.Quantite",keywords:["Total_Produit","return","self.Prix","self.Quantite","*"],explanation:"Le total est le produit du prix unitaire par la quantité achetée."},
+{id:"e1q2",pts:1,type:"code",answer:"P1 = Produit(1.250, 4, 'Alimentaire')\nP2 = Produit(1.700, 8, 'Electroménager')\nprint(P1.Total_Produit())",keywords:["P1","Produit","1.250","4","Alimentaire","P2","1.700","8","Electroménager","print","Total_Produit"],explanation:"On instancie la classe Produit avec les bons paramètres. P1 = 4 * 1.250 = 5.0."},
+{id:"e1q3",pts:1,type:"code",answer:"def Total_categorie(self, cat):\n    s = 0\n    for p in self.LP:\n        if p.Categorie == cat:\n            s = s + p.Total_Produit()\n    return s",keywords:["Total_categorie","s = 0","for p in self.LP","if p.Categorie == cat","s = s +","Total_Produit","return s"],explanation:"On parcourt la liste des produits, on filtre par catégorie, et on accumule le total de chaque produit correspondant."},
+{id:"e1q4",pts:.5,type:"code",answer:"F1 = Facture()\nF1.LP.append(P1)\nF1.LP.append(P2)\n# ... ajouter P3 à P6",keywords:["F1","Facture","LP.append","P1","P2"],explanation:"On crée l'objet Facture, puis on ajoute les produits dans sa liste LP."},
+{id:"e1q5",pts:1,type:"code",answer:"def total_facture(F, LC):\n    s = 0\n    for i in LC:\n        s = s + F.Total_categorie(i)\n    return s",keywords:["total_facture","s = 0","for i in LC","s = s +","Total_categorie","return s"],explanation:"On parcourt la liste des catégories LC, et pour chacune on ajoute le total de cette catégorie à la somme globale."},
+{id:"e1q6",pts:.25,type:"text",answer:"{'Année': 23, 'Conso': '6.8', 'Date': '03/01', 'Jour': 'Mardi'}\nType : dictionnaire (dict)",keywords:["dictionnaire","dict","Année","23","Conso","6.8","Date","03/01","Jour","Mardi"],explanation:"L'élément 0 de la liste est un dictionnaire contenant les clés Année, Conso, Date, Jour."},
+{id:"e1q7",pts:.5,type:"code",answer:"def week_end(jour):\n    return jour['Jour'] == 'Samedi' or jour['Jour'] == 'Dimanche'",keywords:["week_end","jour['Jour']","Samedi","Dimanche","or","return"],explanation:"On teste si la valeur de la clé 'Jour' est égale à 'Samedi' ou 'Dimanche'."},
+{id:"e1q8",pts:1,type:"code",answer:"def conso_maximale(consommations):\n    date = None\n    annee = None\n    res_maxi = 0\n    for x in consommations:\n        if float(x['Conso']) > res_maxi:\n            res_maxi = float(x['Conso'])\n            date = x['Date']\n            annee = x['Année']\n    return (date, annee)",keywords:["conso_maximale","float","x['Conso']","res_maxi","date","annee","return"],explanation:"On parcourt la liste, on convertit la conso en float pour comparer, et on met à jour le maximum trouvé."},
+{id:"e1q9",pts:1.25,type:"code",answer:"def consommations_jours(consommations):\n    res = {}\n    for v in consommations:\n        if v['Année'] == 22:\n            j = v['Jour']\n            if j in res:\n                res[j] = res[j] + float(v['Conso'])\n            else:\n                res[j] = float(v['Conso'])\n    return res",keywords:["consommations_jours","res = {}","v['Année']","22","j = v['Jour']","if j in res","res[j]","float","Conso","return res"],explanation:"On filtre sur l'année 2022. Pour chaque jour, on accumule la consommation dans le dictionnaire res."}
+]},
+{title:"Ex.2 SQL F1",points:6.5,questions:[
+{id:"e2q1",pts:1.5,type:"text",answer:"• IdPilote : NON, car un pilote peut gagner plusieurs fois (doublons).\n• (IdPilote, CodeCircuit) : NON, car un pilote peut gagner plusieurs fois sur le même circuit (années différentes).\n• (IdPilote, CodeCircuit, Annee) : OUI, car un pilote ne peut gagner qu'une fois par an sur un circuit donné (unicité garantie).",keywords:["IdPilote","NON","plusieurs fois","doublons","CodeCircuit","Annee","OUI","unicité","unique"],explanation:"La clé primaire doit identifier de manière unique chaque ligne. Seule la combinaison des 3 attributs garantit l'unicité."},
+{id:"e2q2",pts:1,type:"text",answer:"• Domaine : Annee > 0 ou TempsRealise au format HH:MM:SS.\n• Relation : IdPilote, CodeCircuit, CodeMarq ne peuvent pas être NULL.\n• Référence : IdPilote référence PILOTE(IdPilote), CodeCircuit référence CIRCUIT(CodeCircuit), CodeMarq référence MARQUEAUTO(CodeMarq).",keywords:["Domaine","Annee","TempsRealise","Relation","NULL","Référence","PILOTE","CIRCUIT","MARQUEAUTO"],explanation:"Contraintes classiques d'intégrité : domaine (type/valeur), relation (non null), référence (clé étrangère valide)."},
+{id:"e2q3",pts:1,type:"code",answer:"INSERT INTO CIRCUIT VALUES ('C050', 'circuit de la corniche de Djeddah', 'Arabie Saoudite', 50, 6175);\nINSERT INTO VICTOIRE VALUES ('P001', 'C050', 2021, '2:06:15', 'M002');",keywords:["INSERT","INTO","CIRCUIT","VALUES","C050","Djeddah","Arabie Saoudite","50","6175","VICTOIRE","P001","2021","2:06:15","M002"],explanation:"Deux INSERT : un pour créer le circuit, un pour enregistrer la victoire associée."},
+{id:"e2q4",pts:.5,type:"code",answer:"SELECT NomCir, PaysCir\nFROM CIRCUIT\nWHERE NbTours > 60;",keywords:["SELECT","NomCir","PaysCir","FROM","CIRCUIT","WHERE","NbTours","> 60"],explanation:"Simple sélection avec filtre sur le nombre de tours."},
+{id:"e2q5",pts:.75,type:"code",answer:"SELECT CIRCUIT.NomCir, CIRCUIT.PaysCir, CIRCUIT.NbTours, CIRCUIT.LongCir\nFROM CIRCUIT\nJOIN VICTOIRE ON CIRCUIT.CodeCircuit = VICTOIRE.CodeCircuit\nJOIN MARQUEAUTO ON VICTOIRE.CodeMarq = MARQUEAUTO.CodeMarq\nWHERE MARQUEAUTO.LibMarq = 'Ferrari' AND VICTOIRE.Annee = 2021;",keywords:["SELECT","NomCir","PaysCir","NbTours","LongCir","FROM","CIRCUIT","JOIN","VICTOIRE","ON","CodeCircuit","MARQUEAUTO","CodeMarq","WHERE","LibMarq","Ferrari","Annee","2021"],explanation:"Jointure entre les 3 tables pour filtrer par marque (Ferrari) et année (2021)."},
+{id:"e2q6",pts:.75,type:"code",answer:"SELECT AVG(CIRCUIT.LongCir)\nFROM CIRCUIT\nJOIN VICTOIRE ON CIRCUIT.CodeCircuit = VICTOIRE.CodeCircuit\nJOIN PILOTE ON VICTOIRE.IdPilote = PILOTE.IdPilote\nWHERE PILOTE.NomPilote = 'Michael Schumacher';",keywords:["SELECT","AVG","LongCir","FROM","CIRCUIT","JOIN","VICTOIRE","PILOTE","WHERE","NomPilote","Michael Schumacher"],explanation:"Jointure pour lier le pilote aux circuits de ses victoires, puis moyenne (AVG) des longueurs."},
+{id:"e2q7",pts:.5,type:"code",answer:"DELETE FROM VICTOIRE\nWHERE Annee < 2000;",keywords:["DELETE","FROM","VICTOIRE","WHERE","Annee","< 2000"],explanation:"Suppression simple avec condition sur l'année."},
+{id:"e2q8",pts:.5,type:"code",answer:"UPDATE MARQUEAUTO\nSET LibMarq = 'Visa Cash App RB'\nWHERE LibMarq = 'Alpha Tauri';",keywords:["UPDATE","MARQUEAUTO","SET","LibMarq","Visa Cash App RB","WHERE","Alpha Tauri"],explanation:"Mise à jour du nom de l'écurie."}
+]},
+{title:"Ex.3 Graphes/OS",points:6.5,questions:[
+{id:"e3q1",pts:.5,type:"code",answer:"G = {\n    'A': ['B', 'C', 'D', 'E'],\n    'B': ['A', 'C', 'D', 'F', 'G'],\n    'C': ['A', 'B', 'E', 'G'],\n    'D': ['A', 'B', 'E', 'H'],\n    'E': ['A', 'C', 'D', 'I'],\n    'F': ['B', 'G'],\n    'G': ['B', 'C', 'F'],\n    'H': ['D'],\n    'I': ['E']\n}",keywords:["G = {","'A'","'B'","'C'","'D'","'E'","'F'","'G'","'H'","'I'"],explanation:"Dictionnaire d'adjacence : chaque clé est un sommet, la valeur est la liste de ses voisins."},
+{id:"e3q2",pts:3,type:"text",answer:"a) Parcours1(G, 'F') (DFS) : ['F', 'B', 'A', 'C', 'E', 'D', 'H', 'I', 'G'] (ordre peut varier selon voisins)\nb) Parcours2(G, 'H') (BFS) : ['H', 'D', 'A', 'B', 'E', 'C', 'I', 'F', 'G']\nc) Parcours3(G, 'I') (DFS pile) : ['I', 'E', 'D', 'H', 'A', 'B', 'C', 'G', 'F']",keywords:["F","B","A","C","E","D","H","I","G","H","D","A","B","E","C","I","F","G","I","E","D","H","A","B","C","G","F"],explanation:"a) DFS récursif explore en profondeur. b) BFS explore niveau par niveau. c) DFS itératif avec pile (LIFO)."},
+{id:"e3q3",pts:1.5,type:"text",answer:"Tourniquet (Q=1) : P1, P2, P1, P3, P2, P1, P4, P2, P1, P3, P2, P1, P4, P2, P1, P3, P2, P1\n(Ordre d'arrivée : P1(0), P2(2), P3(3), P4(7))",keywords:["P1","P2","P3","P4","Tourniquet","Round Robin","quantum","1"],explanation:"Chaque processus exécute 1 cycle puis retourne à la fin de la file. Les nouveaux arrivants s'ajoutent à la file."},
+{id:"e3q4",pts:1.5,type:"text",answer:"SRTF (préemptif) : P1, P1, P2, P3, P2, P2, P4, P4, P2, P2, P1, P1, P1, P1, P1, P1, P1\n(P1 démarre. P2 arrive t=2 (rest 5) < P1 (rest 5) ? Non égalité -> P1 continue ? Non, P1 a commencé. A t=3 P3 arrive (3) < P1(5) et P2(5) -> P3. Etc.)\nCorrection détaillée : P1(0-2), P2(2-3), P3(3-6), P2(6-7), P4(7-9), P2(9-11), P1(11-17)",keywords:["SRTF","P1","P2","P3","P4","préemptif","plus court","temps restant"],explanation:"À chaque cycle, on choisit le processus avec le temps restant le plus court. Préemption si un nouveau processus est plus court."}
+]}];
+
+document.addEventListener('DOMContentLoaded',()=>{initEditors();loadState();setInterval(autoSave,20000)});
+function initEditors(){document.querySelectorAll('.code-editor').forEach(ta=>{const m=ta.dataset.mode||'python';const cm=CodeMirror.fromTextArea(ta,{mode:m==='sql'?'text/x-sql':'python',theme:'dracula',lineNumbers:true,indentUnit:4,tabSize:4,indentWithTabs:false,lineWrapping:true,matchBrackets:true,extraKeys:{"Tab":cm=>{cm.replaceSelection("    ","end")}}});editors[ta.id]=cm;cm.setSize(null,'auto');cm.on('change',()=>cm.setSize(null,'auto'))})}
+function startTimer(){updateTimer();timerInterval=setInterval(()=>{if(isSubmitted){clearInterval(timerInterval);return}remainingSeconds--;if(remainingSeconds<=0){remainingSeconds=0;clearInterval(timerInterval);submitExam(true)}updateTimer()},1000)}
+function updateTimer(){const h=Math.floor(remainingSeconds/3600),m=Math.floor((remainingSeconds%3600)/60),s=remainingSeconds%60;document.getElementById('timerDisplay').textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;const b=document.getElementById('timerBox');b.classList.remove('w','d');if(remainingSeconds<600)b.classList.add('d');else if(remainingSeconds<1800)b.classList.add('w')}
+function switchTab(i){document.querySelectorAll('.pnl').forEach((p,j)=>p.classList.toggle('active',j===i));document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));window.scrollTo({top:0,behavior:'smooth'})}
+function autoSave(){if(isSubmitted)return;const d={time:remainingSeconds,ch:cheatWarnings,sn:studentName,sf:studentFirst,sm:studentMail,a:{}};ED.forEach(ex=>ex.questions.forEach(q=>{if(editors[`ans_${q.id}`])d.a[q.id]=editors[`ans_${q.id}`].getValue();else{const el=document.getElementById(`ans_${q.id}`);if(el)d.a[q.id]=el.value}}));localStorage.setItem(SK,JSON.stringify(d))}
+function loadState(){const r=localStorage.getItem(SK);if(!r)return;try{const d=JSON.parse(r);if(d.time)remainingSeconds=d.time;if(d.ch){cheatWarnings=d.ch;document.getElementById('cheatCount').textContent=cheatWarnings}if(d.sn){studentName=d.sn;studentFirst=d.sf||'';studentMail=d.sm||'';document.getElementById('studentNom').value=studentName;document.getElementById('studentPrenom').value=studentFirst;document.getElementById('studentEmail').value=studentMail}updateTimer();if(d.a)Object.keys(d.a).forEach(q=>{if(editors[`ans_${q}`])editors[`ans_${q}`].setValue(d.a[q]);else{const el=document.getElementById(`ans_${q}`);if(el)el.value=d.a[q]}})}catch(e){}}
+function getA(q){if(editors[`ans_${q}`])return editors[`ans_${q}`].getValue().trim();const el=document.getElementById(`ans_${q}`);return el?el.value.trim():''}
+function norm(s){return s.toLowerCase().replace(/[''"`]/g,"'").replace(/\s+/g,' ').replace(/[àâä]/g,'a').replace(/[éèêë]/g,'e').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/[ùûü]/g,'u').replace(/ç/g,'c').trim()}
+function grade(q){const a=getA(q.id);if(!a)return{score:0,max:q.pts,correct:false};const na=norm(a);let m=0;const kw=q.keywords.map(k=>norm(k));kw.forEach(k=>{if(na.includes(k))m++});const r=m/kw.length;let sc;if(r>=.6)sc=q.pts;else if(r>=.35)sc=q.pts*.5;else if(r>=.15)sc=q.pts*.25;else sc=0;sc=Math.round(sc*4)/4;return{score:sc,max:q.pts,correct:sc>=q.pts*.55}}
+function submitExam(forced=false){if(isSubmitted)return;if(!forced&&!confirm(`📝 ${studentFirst} ${studentName}, soumettre votre copie ?`))return;isSubmitted=true;clearInterval(timerInterval);document.getElementById('submitBtn').disabled=true;document.getElementById('submitBtn').textContent='✅ Soumise';document.querySelectorAll('.ans textarea').forEach(t=>t.readOnly=true);Object.values(editors).forEach(cm=>cm.setOption('readOnly',true));document.querySelectorAll('.qc').forEach(c=>c.classList.add('locked'));if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});let ts=0,tm=0,exS=[];ED.forEach((ex,ei)=>{let xs=0,xm=0;ex.questions.forEach(q=>{const r=grade(q);xs+=r.score;xm+=r.max;ts+=r.score;tm+=r.max;showCorr(q,r)});exS.push({title:ex.title,score:xs,max:xm,idx:ei});const tab=document.querySelector(`.tab[data-tab="${ei}"] .b`);if(tab){tab.textContent=`${xs.toFixed(1)}/${xm}`;if(xs>=xm*.5)tab.parentElement.classList.add('done')}});showResults(ts,tm,exS)}
+function showCorr(q,r){const c=document.getElementById(`card_${q.id}`),co=document.getElementById(`corr_${q.id}`);if(!c||!co)return;c.classList.add(r.correct?'ok':'ko');const i=r.correct?'✅':(r.score>0?'⚠️':'❌');co.className=`cor show ${r.correct?'cok':'cko'}`;co.innerHTML=`<div class="ri">${i} ${r.score}/${r.max}pt</div><h4>📌 Attendu:</h4><div class="ex">${esc(q.answer)}</div><div class="ep">💡 ${q.explanation}</div>`}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function showResults(t,m,exS){const n=Math.round((t/m)*20*4)/4,p=Math.round((t/m)*100);let ap,gc;if(n>=16){ap='🏆 Excellent';gc='ge'}else if(n>=14){ap='👏 Bien';gc='gb'}else if(n>=12){ap='👍 Assez bien';gc='gab'}else if(n>=10){ap='✊ Passable';gc='gp'}else{ap='📚 Insuffisant';gc='gi'}document.getElementById('gradeCircle').className=`gc ${gc}`;document.getElementById('gradeNote').textContent=n.toFixed(2);document.getElementById('appreciation').textContent=ap;document.getElementById('studentResult').textContent=`👤 ${studentFirst} ${studentName} — ${studentMail}`;let cn=cheatWarnings>0?` | ⚠️ ${cheatWarnings} triche(s)`:'';document.getElementById('percentage').textContent=`${p}% — ${t.toFixed(2)}/${m}pts → ${n.toFixed(2)}/20${cn}`;let h='';exS.forEach(e=>{const p2=Math.round((e.score/e.max)*100),c=p2>=55?'#27ae60':p2>=30?'#f39c12':'#c0392b';h+=`<div class="sr"><div><strong>${e.title}</strong><div class="pbr"><div class="fill" style="width:${p2}%;background:${c}"></div></div></div><div style="font-weight:700;color:${c}">${e.score.toFixed(2)}/${e.max}</div></div>`});document.getElementById('exerciseScores').innerHTML=h;document.getElementById('resultsOverlay').classList.add('show')}
+function closeResults(){document.getElementById('resultsOverlay').classList.remove('show');switchTab(0)}
+function exportPDF(){closeResults();document.querySelectorAll('.pnl').forEach(p=>p.style.display='block');const header=document.createElement('div');header.id='pdfHeader';header.style.cssText='padding:15px;background:#f8f9fa;border:2px solid #2c3e50;border-radius:10px;margin-bottom:15px;text-align:center';header.innerHTML=`<h2 style="color:#2c3e50;margin:0">Bac Blanc NSI 2024 — Copie Corrigée</h2><p style="margin:5px 0;color:#2c3e50"><strong>Élève :</strong> ${studentFirst} ${studentName} | <strong>Email :</strong> ${studentMail}</p><p style="margin:0;color:#7f8c8d;font-size:.85rem">${cheatWarnings>0?'⚠️ '+cheatWarnings+' avertissement(s) de triche | ':''}Soumise le ${new Date().toLocaleString()}</p>`;document.getElementById('mainContainer').prepend(header);html2pdf().set({margin:5,filename:`BB_NSI_2024_${studentName}_${studentFirst}${cheatWarnings>0?'_TRICHE'+cheatWarnings:''}.pdf`,image:{type:'jpeg',quality:.9},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(document.getElementById('mainContainer')).save().then(()=>{header.remove();document.querySelectorAll('.pnl').forEach(p=>p.style.display='')})}
+</script>
+</body>
+</html>
