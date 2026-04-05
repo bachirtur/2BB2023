@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Examen NSI - Bac Blanc 2024</title>
+    <title>Examen Interactif NSI - Bac Blanc 2024</title>
 
-    <!-- CodeMirror : Éditeur de code professionnel -->
+    <!-- PDF.js pour le lecteur intégré -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+    <!-- CodeMirror pour l'éditeur Python & SQL -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
@@ -13,32 +16,30 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/sql/sql.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
 
-    <!-- jsPDF : Export de la copie au format PDF -->
+    <!-- jsPDF pour l'export de la copie -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         /* === VARIABLES & RESET === */
         :root {
-            --primary: #0f172a; /* Bleu très foncé institutionnel */
-            --primary-light: #334155;
-            --accent: #2563eb; /* Bleu vif pour les actions */
-            --accent-hover: #1d4ed8;
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --secondary: #0f172a;
+            --accent: #2563eb;
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
-            --bg-main: #f1f5f9;
+            --bg-main: #f8fafc;
             --bg-panel: #ffffff;
-            --text-main: #334155;
-            --text-light: #94a3b8;
             --border: #e2e8f0;
+            --text-main: #334155;
             --radius: 8px;
-            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --font-main: 'Segoe UI', system-ui, sans-serif;
             --font-mono: 'Consolas', 'Courier New', monospace;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: var(--font-main); background-color: var(--bg-main); color: var(--text-main); height: 100vh; overflow: hidden; }
-        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-main); background: var(--bg-main); color: var(--text-main); overflow: hidden; height: 100vh; }
         .unselectable { user-select: none; -webkit-user-select: none; }
         .hidden { display: none !important; }
 
@@ -46,214 +47,210 @@
         .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); z-index: 10; overflow-y: auto; }
 
         /* === ACCUEIL === */
-        .welcome-card { max-width: 600px; margin: 6vh auto; background: var(--bg-panel); border-radius: var(--radius); padding: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border-top: 5px solid var(--accent); }
-        .header-logos { display: flex; justify-content: center; margin-bottom: 20px; }
-        .welcome-card h1 { text-align: center; color: var(--primary); font-size: 1.5rem; margin-bottom: 5px; }
-        .welcome-card h2 { text-align: center; color: var(--accent); font-size: 1.2rem; margin-bottom: 20px; font-weight: 500; }
+        .welcome-wrapper { max-width: 600px; margin: 5vh auto; background: var(--bg-panel); padding: 40px; border-radius: var(--radius); box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 6px solid var(--primary); }
+        .welcome-wrapper h1 { color: var(--primary); text-align: center; margin-bottom: 5px; font-size: 1.6rem; }
+        .welcome-wrapper h2 { color: var(--primary-light); text-align: center; margin-bottom: 20px; font-size: 1.1rem; font-weight: 500; }
         
-        .info-box { background: #eff6ff; border-left: 4px solid var(--accent); padding: 15px; border-radius: 4px; margin-bottom: 25px; font-size: 0.9rem; line-height: 1.5; color: #1e3a8a; }
+        .alert-box { background: #fee2e2; border-left: 4px solid var(--danger); padding: 15px; border-radius: 4px; margin-bottom: 25px; font-size: 0.9rem; color: #991b1b; }
         
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
-        .form-group input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; outline: none; transition: border-color 0.2s; }
-        .form-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-        .form-group input[readonly] { background: #f8fafc; color: var(--text-light); cursor: not-allowed; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; transition: border-color 0.2s; font-size: 1rem; }
+        .form-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .form-group input[readonly] { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
 
-        .btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: background 0.2s; text-decoration: none; }
-        .btn:hover { background: var(--accent-hover); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn:hover { background: #1d4ed8; }
         .btn-danger { background: var(--danger); }
         .btn-danger:hover { background: #dc2626; }
         .btn-success { background: var(--success); }
         .btn-success:hover { background: #059669; }
 
         /* === INTERFACE EXAMEN (SPLIT SCREEN) === */
-        .exam-layout { display: flex; height: 100vh; width: 100vw; }
+        .exam-container { display: flex; height: 100vh; width: 100vw; }
         
-        /* Panneau PDF (Gauche) */
-        .pdf-panel { width: 45%; height: 100%; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: #334155; }
-        .pdf-toolbar { background: var(--primary); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 600; }
+        /* GAUCHE : LECTEUR PDF */
+        .pdf-panel { width: 50%; height: 100%; display: flex; flex-direction: column; border-right: 2px solid var(--border); background: #525659; }
+        .pdf-toolbar { background: var(--secondary); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; color: white; font-size: 0.9rem; }
+        .pdf-toolbar button { background: #334155; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin: 0 2px; }
+        .pdf-toolbar button:hover { background: #475569; }
         
-        .pdf-overlay { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; color: white; }
-        .pdf-overlay input[type="file"] { margin-top: 20px; padding: 10px; background: white; color: var(--primary); border-radius: var(--radius); cursor: pointer; max-width: 100%; }
-        #pdf-iframe { width: 100%; flex-grow: 1; border: none; background: #e2e8f0; }
+        .pdf-viewer-area { flex-grow: 1; overflow: auto; display: flex; justify-content: center; padding: 20px; position: relative; }
+        #pdf-canvas { max-width: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        
+        .pdf-upload-overlay { position: absolute; inset: 0; background: #334155; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; padding: 40px; z-index: 5; }
+        .pdf-upload-overlay input { margin-top: 20px; padding: 10px; background: white; color: black; border-radius: 4px; cursor: pointer; }
 
-        /* Panneau Questions (Droite) */
-        .content-panel { width: 55%; height: 100%; display: flex; flex-direction: column; background: var(--bg-main); }
+        /* DROITE : QUESTIONS */
+        .content-panel { width: 50%; height: 100%; display: flex; flex-direction: column; background: var(--bg-main); }
+        .exam-header { background: var(--bg-panel); padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .student-badge { font-weight: 600; font-size: 1.05rem; }
+        .student-badge span { display: block; font-size: 0.85rem; color: #64748b; font-weight: normal; margin-top: 4px; }
         
-        .exam-header { background: var(--bg-panel); padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 5; }
-        .student-info { font-weight: 600; font-size: 1.05rem; }
-        .student-info span { display: block; font-size: 0.85rem; color: var(--text-light); font-weight: 400; margin-top: 4px; }
-        
-        .timer-badge { background: #fee2e2; color: var(--danger); padding: 8px 16px; border-radius: 30px; font-weight: bold; font-size: 1.2rem; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 8px; border: 1px solid #fca5a5; }
-        .timer-badge.warning { animation: pulse 1s infinite; background: var(--danger); color: white; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; transform: scale(1.02); } 100% { opacity: 1; } }
+        .timer { background: #fee2e2; color: var(--danger); padding: 8px 16px; border-radius: 30px; font-weight: bold; font-size: 1.2rem; font-variant-numeric: tabular-nums; border: 1px solid #fca5a5; }
+        .timer.warning { animation: pulse 1s infinite; background: var(--danger); color: white; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; transform: scale(1.05); } 100% { opacity: 1; } }
 
-        .progress-bar { width: 100%; height: 6px; background: var(--border); }
-        .progress-fill { height: 100%; background: var(--success); width: 0%; transition: width 0.3s ease; }
+        .progress-wrap { height: 6px; background: var(--border); width: 100%; }
+        .progress-bar { height: 100%; background: var(--success); width: 0%; transition: width 0.3s; }
 
-        .questions-scroll { flex-grow: 1; overflow-y: auto; padding: 30px; scroll-behavior: smooth; }
+        .questions-area { flex-grow: 1; overflow-y: auto; padding: 30px; scroll-behavior: smooth; }
         
-        .exercise-block { background: var(--bg-panel); border-radius: var(--radius); padding: 30px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid var(--border); }
-        .exercise-title { color: var(--primary); font-size: 1.3rem; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--bg-main); display: flex; justify-content: space-between; }
+        .exercise-card { background: var(--bg-panel); border-radius: var(--radius); padding: 30px; margin-bottom: 30px; border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .ex-title { color: var(--primary); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--bg-main); }
         
-        .question-card { margin-bottom: 30px; }
-        .question-statement { font-size: 1rem; line-height: 1.6; margin-bottom: 15px; }
-        .question-statement strong { color: var(--accent); background: #eff6ff; padding: 2px 8px; border-radius: 4px; margin-right: 8px; }
+        .question { margin-bottom: 25px; }
+        .q-stmt { font-size: 1.05rem; margin-bottom: 15px; line-height: 1.5; }
+        .q-pts { display: inline-block; background: #e0e7ff; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; margin-right: 8px; }
         
-        /* Champs de saisie */
-        textarea.text-answer { width: 100%; min-height: 100px; padding: 15px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; font-family: var(--font-main); resize: vertical; line-height: 1.5; }
-        textarea.text-answer:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        textarea.text-ans { width: 100%; min-height: 100px; padding: 15px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; font-family: var(--font-main); resize: vertical; }
+        textarea.text-ans:focus { outline: none; border-color: var(--accent); }
         
-        .cm-container { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-        .CodeMirror { height: auto; min-height: 150px; font-family: var(--font-mono); font-size: 14px; line-height: 1.5; }
+        .cm-wrapper { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 10px; }
+        .CodeMirror { height: auto; min-height: 150px; font-family: var(--font-mono); font-size: 14px; }
 
-        /* === ÉCRAN RÉSULTATS === */
-        .results-wrapper { max-width: 900px; margin: 40px auto; background: var(--bg-panel); border-radius: var(--radius); padding: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        
+        /* === RÉSULTATS === */
+        .results-container { max-width: 900px; margin: 40px auto; background: var(--bg-panel); padding: 40px; border-radius: var(--radius); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         .score-hero { background: var(--primary); color: white; padding: 40px; border-radius: var(--radius); text-align: center; margin-bottom: 30px; }
-        .score-hero h2 { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.9; margin-bottom: 10px; }
-        .score-hero .score-val { font-size: 4.5rem; font-weight: bold; margin: 10px 0; }
-        .score-hero .appreciation { font-size: 1.5rem; font-weight: 600; padding: 5px 15px; background: rgba(255,255,255,0.2); border-radius: 30px; display: inline-block; }
+        .score-val { font-size: 4.5rem; font-weight: bold; margin: 10px 0; }
+        .appreciation { font-size: 1.5rem; font-weight: 600; padding: 5px 20px; background: rgba(255,255,255,0.2); border-radius: 30px; display: inline-block; }
 
-        .security-log { background: #fffbeb; border: 1px solid #fcd34d; border-radius: var(--radius); padding: 25px; margin-bottom: 30px; }
-        .security-log h3 { color: #b45309; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-        .security-log ul { list-style-type: none; }
-        .security-log li { padding: 8px 0; border-bottom: 1px solid #fde68a; color: #92400e; display: flex; justify-content: space-between; }
-        .security-log li:last-child { border-bottom: none; }
+        .log-panel { background: #fffbeb; border: 1px solid #fcd34d; padding: 25px; border-radius: var(--radius); margin-bottom: 30px; }
+        .log-panel h3 { color: #b45309; margin-bottom: 15px; }
+        .log-panel ul { list-style: none; color: #92400e; }
+        .log-panel li { padding: 8px 0; border-bottom: 1px solid #fde68a; display: flex; justify-content: space-between; }
 
-        .correction-box { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 25px; overflow: hidden; }
-        .corr-header { background: #f8fafc; padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
-        .corr-body { padding: 20px; }
-        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; color: white; }
-        .status-badge.ok { background: var(--success); }
-        .status-badge.ko { background: var(--danger); }
-        .status-badge.partial { background: var(--warning); }
+        .corr-box { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 25px; overflow: hidden; }
+        .corr-header { background: #f8fafc; padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; color: white; }
+        .badge.ok { background: var(--success); }
+        .badge.ko { background: var(--danger); }
+        .badge.part { background: var(--warning); }
         
-        .ans-block { margin-top: 15px; }
-        .ans-block span { font-size: 0.85rem; text-transform: uppercase; color: var(--text-light); font-weight: bold; }
-        .ans-content { background: #f1f5f9; padding: 15px; border-radius: 6px; margin-top: 5px; font-family: var(--font-mono); white-space: pre-wrap; font-size: 0.95rem; border-left: 3px solid #94a3b8; }
-        .corr-content { background: #ecfdf5; padding: 15px; border-radius: 6px; margin-top: 5px; font-family: var(--font-mono); white-space: pre-wrap; font-size: 0.95rem; border-left: 3px solid var(--success); color: #065f46; }
+        .corr-body { padding: 20px; }
+        .ans-user { background: #f1f5f9; padding: 15px; border-radius: 6px; font-family: var(--font-mono); white-space: pre-wrap; font-size: 0.95rem; border-left: 4px solid #94a3b8; margin: 10px 0 20px; }
+        .ans-corr { background: #ecfdf5; padding: 15px; border-radius: 6px; font-family: var(--font-mono); white-space: pre-wrap; font-size: 0.95rem; border-left: 4px solid var(--success); color: #065f46; margin-top: 10px; }
 
-        /* === TOASTS NOTIFICATIONS === */
+        /* === TOASTS === */
         #toasts { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: white; color: var(--primary); padding: 15px 20px; border-radius: var(--radius); box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-left: 4px solid var(--accent); font-weight: 500; animation: slideIn 0.3s forwards, fadeOut 0.3s forwards 3s; }
-        .toast.error { border-left-color: var(--danger); }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { to { opacity: 0; } }
+        .toast { background: white; padding: 15px 20px; border-radius: var(--radius); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-left: 5px solid var(--accent); font-weight: 600; animation: slideIn 0.3s forwards, fadeOut 0.3s forwards 3s; }
+        .toast.error { border-color: var(--danger); color: var(--danger); }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateX(100%); } }
     </style>
 </head>
 <body class="unselectable">
 
-    <!-- === ÉCRAN 1 : ACCUEIL === -->
+    <!-- ÉCRAN 1 : ACCUEIL -->
     <div id="screen-welcome" class="screen">
-        <div class="welcome-card">
-            <div class="header-logos">
-                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-            </div>
-            <h1>BACCALAURÉAT GÉNÉRAL</h1>
-            <h2>Épreuve de Spécialité NSI - Bac Blanc 2024</h2>
+        <div class="welcome-wrapper">
+            <h1>Évaluation Interactive en Ligne</h1>
+            <h2>NSI - Bac Blanc 2024</h2>
             
-            <div class="info-box">
-                <strong>Règlement de l'examen :</strong><br>
-                L'épreuve dure <strong>3h30</strong>. Le passage en mode plein écran est obligatoire. Le système de télésurveillance est actif : toute perte de focus, tentative de copier-coller ou ouverture d'un autre onglet sera enregistrée dans votre rapport final.<br><br>
-                <em>Vos réponses sont sauvegardées automatiquement en local.</em>
+            <div class="alert-box">
+                <strong>⚠️ Télésurveillance activée</strong><br>
+                Le passage en mode plein écran est obligatoire. Le système enregistre toute sortie de l'onglet, perte de focus et tentative de copier-coller. Vos données sont sauvegardées en local toutes les 10 secondes.
             </div>
 
-            <form id="start-form">
+            <form id="form-start">
                 <div class="form-group">
-                    <label for="nom">Nom de famille *</label>
-                    <input type="text" id="nom" required placeholder="Saisissez votre nom" autocomplete="off">
+                    <label>Nom *</label>
+                    <input type="text" id="nom" required placeholder="Votre nom" autocomplete="off">
                 </div>
                 <div class="form-group">
-                    <label for="prenom">Prénom *</label>
-                    <input type="text" id="prenom" required placeholder="Saisissez votre prénom" autocomplete="off">
+                    <label>Prénom *</label>
+                    <input type="text" id="prenom" required placeholder="Votre prénom" autocomplete="off">
                 </div>
                 <div class="form-group">
-                    <label for="email">Adresse e-mail *</label>
+                    <label>E-mail *</label>
                     <input type="email" id="email" required placeholder="prenom.nom@domaine.fr" autocomplete="off">
                 </div>
                 <div class="form-group">
-                    <label for="classe">Classe / Groupe *</label>
+                    <label>Classe / Groupe *</label>
                     <input type="text" id="classe" required placeholder="Ex: Terminale 1" autocomplete="off">
                 </div>
                 <div class="form-group">
-                    <label>Heure de connexion</label>
-                    <input type="text" id="time-display" readonly>
+                    <label>Date et heure de connexion</label>
+                    <input type="text" id="datetime" readonly>
                 </div>
                 
-                <button type="submit" class="btn">Démarrer l'évaluation sécurisée ➔</button>
+                <button type="submit" class="btn">Démarrer l'épreuve sécurisée ➔</button>
             </form>
         </div>
     </div>
 
-    <!-- === ÉCRAN 2 : EXAMEN === -->
+    <!-- ÉCRAN 2 : EXAMEN -->
     <div id="screen-exam" class="screen hidden">
-        <div class="exam-layout">
+        <div class="exam-container">
             
-            <!-- GAUCHE : LECTEUR PDF -->
+            <!-- PANNEAU GAUCHE : LECTEUR PDF.JS -->
             <div class="pdf-panel">
                 <div class="pdf-toolbar">
-                    <span>📄 Sujet d'examen (PDF)</span>
-                    <span id="pdf-status" style="color: #94a3b8; font-weight: normal;">En attente...</span>
+                    <div style="font-weight: bold;">📄 Sujet PDF</div>
+                    <div>
+                        <button id="pdf-prev">◀ Préc.</button>
+                        <span id="page_num">0</span> / <span id="page_count">0</span>
+                        <button id="pdf-next">Suiv. ▶</button>
+                    </div>
+                    <div>
+                        <button id="pdf-zoom-out">➖</button>
+                        <button id="pdf-zoom-in">➕</button>
+                    </div>
                 </div>
                 
-                <div id="pdf-upload-ui" class="pdf-overlay">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-                    <h2 style="margin-bottom: 10px;">Chargement du Sujet</h2>
-                    <p style="font-size: 0.95rem; color: #cbd5e1; max-width: 80%; line-height: 1.5;">Pour garantir un fonctionnement 100% hors-ligne, veuillez sélectionner le fichier PDF du sujet ("Bac_Blanc_NSI_2024.pdf") présent sur votre ordinateur.</p>
-                    <input type="file" id="pdf-input" accept="application/pdf">
+                <div class="pdf-viewer-area" id="pdf-viewer-area">
+                    <div id="pdf-upload-overlay" class="pdf-upload-overlay">
+                        <h2>Chargement du Sujet</h2>
+                        <p style="margin: 10px 0 20px;">Pour garantir le fonctionnement local hors-ligne, veuillez sélectionner le fichier PDF de l'examen.</p>
+                        <input type="file" id="pdf-file" accept="application/pdf">
+                    </div>
+                    <canvas id="pdf-canvas"></canvas>
                 </div>
-
-                <iframe id="pdf-iframe" class="hidden"></iframe>
             </div>
 
-            <!-- DROITE : QUESTIONS -->
+            <!-- PANNEAU DROITE : QUESTIONS -->
             <div class="content-panel">
-                <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+                <div class="progress-wrap"><div id="progress-bar" class="progress-bar"></div></div>
                 
                 <div class="exam-header">
-                    <div class="student-info">
-                        <span id="ui-student-name" style="color: var(--primary); font-size: 1.1rem; font-weight: bold; margin:0;"></span>
-                        <span id="ui-progress-text">Progression : 0%</span>
+                    <div class="student-badge">
+                        <span id="ui-name" style="color: var(--primary); font-size: 1.1rem; font-weight: bold;"></span>
+                        <span id="ui-progress">Progression : 0%</span>
                     </div>
-                    <div id="timer-badge" class="timer-badge">
-                        ⏱ <span id="timer-text">03:30:00</span>
-                    </div>
-                    <button id="btn-submit" class="btn btn-danger" style="width: auto; padding: 10px 20px;">Rendre la copie</button>
+                    <div class="timer" id="timer-display">03:30:00</div>
+                    <button id="btn-submit" class="btn btn-danger" style="width: auto; padding: 10px 20px;">Soumettre la copie</button>
                 </div>
 
-                <div class="questions-scroll" id="questions-container">
-                    <!-- Génération dynamique via JS -->
+                <div class="questions-area" id="questions-area">
+                    <!-- Injection dynamique des questions -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- === ÉCRAN 3 : RÉSULTATS === -->
+    <!-- ÉCRAN 3 : RÉSULTATS -->
     <div id="screen-results" class="screen hidden">
-        <div class="results-wrapper">
+        <div class="results-container">
             
             <div class="score-hero">
-                <h2>Note Finale</h2>
-                <div class="score-val" id="res-score">--/20</div>
-                <div class="appreciation" id="res-appreciation">--</div>
-                <div style="margin-top: 15px; opacity: 0.8;" id="res-percent">Taux de réussite : --%</div>
+                <h3>Épreuve Terminée</h3>
+                <div class="score-val" id="final-score">--/20</div>
+                <div class="appreciation" id="final-app">--</div>
+                <p style="margin-top: 15px; opacity: 0.9;" id="final-pct">Taux de réussite : --%</p>
             </div>
 
-            <div class="security-log">
-                <h3>🛡️ Journal Anti-Fraude</h3>
-                <ul id="res-logs">
-                    <!-- Logs générés -->
-                </ul>
+            <div class="log-panel">
+                <h3>🛡️ Rapport Anti-Fraude</h3>
+                <ul id="anti-cheat-logs"></ul>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                <h3 style="font-size: 1.3rem; color: var(--primary);">Détail de la correction</h3>
-                <button id="btn-export-pdf" class="btn btn-success" style="width: auto; padding: 10px 20px;">📥 Exporter la copie corrigée (PDF)</button>
+                <h2 style="color: var(--primary);">Correction détaillée</h2>
+                <button id="btn-download" class="btn btn-success" style="width: auto; padding: 12px 25px;">📥 Télécharger la copie en PDF</button>
             </div>
 
-            <div id="correction-container">
-                <!-- Corrections générées -->
+            <div id="correction-area">
+                <!-- Injection dynamique des corrections -->
             </div>
         </div>
     </div>
@@ -262,194 +259,71 @@
 
     <script>
         /** =========================================================================
-         *  1. DONNÉES DU SUJET & BARÈME (Extraction du PDF NSI 2024)
+         *  0. CONFIGURATION & DONNÉES DU SUJET (Bac Blanc NSI 2024 / 2023)
          *  ========================================================================= */
+        const EXAM_DURATION = 3 * 3600 + 30 * 60; // 3h30
         
-        const EXAM_TIME = 3 * 3600 + 30 * 60; // 3h30 = 12600 secondes
-        
-        // Base de données des questions (Structure, Points, Mots-clés pour autograde, Correction)
+        // Configuration de PDF.js Worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        // Extraction structurée du sujet pour l'auto-génération et correction
         const examData = [
             {
-                id: "ex1",
-                title: "Exercice 1 : Programmation Orientée Objet (7 points)",
+                id: "ex1", title: "Exercice 1 : Programmation Orientée Objet & Dictionnaires (7 pts)",
                 questions: [
-                    {
-                        id: "q1_1", type: "code", mode: "python", pts: 0.5,
-                        stmt: "1. Écrire le code de la méthode <code>Total_Produit</code> de la classe <code>Produit</code>.",
-                        keys: ["return", "self.Prix", "*", "self.Quantite"],
-                        corr: "def Total_Produit(self):\n    return self.Prix * self.Quantite"
-                    },
-                    {
-                        id: "q1_2a", type: "code", mode: "python", pts: 0.5,
-                        stmt: "2.a. Créer les 2 premiers produits (4 boites de biscuits à 1.250 et 8 piles à 1.700) et les nommer <code>P1</code> et <code>P2</code>.",
-                        keys: ["P1", "=", "Produit", "1.25", "4", "Alimentaire", "P2", "1.7", "8"],
-                        corr: "P1 = Produit(1.250, 4, 'Alimentaire')\nP2 = Produit(1.700, 8, 'Electroménager')"
-                    },
-                    {
-                        id: "q1_2b", type: "code", mode: "python", pts: 0.5,
-                        stmt: "2.b. Afficher le prix total du produit P1.",
-                        keys: ["print", "P1.Total_Produit()"],
-                        corr: "print(P1.Total_Produit())"
-                    },
-                    {
-                        id: "q1_3", type: "code", mode: "python", pts: 1,
-                        stmt: "3. Compléter la méthode <code>Total_categorie(self, cat)</code> de la classe <code>Facture</code>.",
-                        keys: ["s=0", "for p in self.LP:", "if p.Categorie == cat:", "s=s+p.Total_Produit()", "return s"],
-                        corr: "def Total_categorie(self, cat):\n    s = 0\n    for p in self.LP:\n        if p.Categorie == cat:\n            s = s + p.Total_Produit()\n    return s"
-                    },
-                    {
-                        id: "q1_4", type: "code", mode: "python", pts: 0.5,
-                        stmt: "4. Créer une facture <code>F1</code>. Puis, ajouter les 6 produits (P1 à P6).",
-                        keys: ["F1", "=", "Facture()", "F1.LP", "[P1, P2, P3, P4, P5, P6]", "append"],
-                        corr: "F1 = Facture()\n# Via liste directe ou append\nF1.LP = [P1, P2, P3, P4, P5, P6]"
-                    },
-                    {
-                        id: "q1_5", type: "code", mode: "python", pts: 1,
-                        stmt: "5. Compléter la fonction <code>total_facture(F, LC)</code> qui renvoie la somme totale.",
-                        keys: ["s=0", "for i in LC:", "s=s+F.Total_categorie(i)", "return s"],
-                        corr: "def total_facture(F, LC):\n    s = 0\n    for i in LC:\n        s = s + F.Total_categorie(i)\n    return s"
-                    },
-                    {
-                        id: "q1_B1", type: "text", pts: 0.25,
-                        stmt: "Partie B - 1. Que vaut <code>consommations_martin[0]</code> ? Quel est son type ?",
-                        keys: ["dictionnaire", "dict", "{'Année': 23"],
-                        corr: "Elle vaut {'Année': 23, 'Consommation': '6.8', 'Date': '03/01', 'Jour': 'Mardi'}. C'est de type dictionnaire (dict)."
-                    },
-                    {
-                        id: "q1_B2", type: "code", mode: "python", pts: 0.5,
-                        stmt: "Partie B - 2. Écrire la fonction <code>week_end(jour)</code> renvoyant True si samedi ou dimanche.",
-                        keys: ["def week_end", "if", "jour['Jour']", "==", "'Samedi'", "'Dimanche'", "return"],
-                        corr: "def week_end(jour):\n    if jour['Jour'] == 'Samedi' or jour['Jour'] == 'Dimanche':\n        return True\n    return False"
-                    },
-                    {
-                        id: "q1_B3", type: "code", mode: "python", pts: 1,
-                        stmt: "Partie B - 3. Compléter <code>conso_maximale(consommations)</code>.",
-                        keys: ["float(x['Consommation'])", ">", "res_maxi", "date = x['Date']", "annee = x['Année']"],
-                        corr: "if float(x['Consommation']) > res_maxi:\n    res_maxi = float(x['Consommation'])\n    date = x['Date']\n    annee = x['Année']"
-                    },
-                    {
-                        id: "q1_B4", type: "code", mode: "python", pts: 1.25,
-                        stmt: "Partie B - 4. Compléter <code>consommations_jours(consommations)</code> renvoyant les totaux par jour.",
-                        keys: ["res={}", "d[j] = d[j] + float(v['Consommation'])", "d[j] = float(v['Consommation'])"],
-                        corr: "res = {}\nfor v in consommations:\n    j = v['Jour']\n    if j in res:\n        res[j] = res[j] + float(v['Consommation'])\n    else:\n        res[j] = float(v['Consommation'])\nreturn res"
-                    }
+                    { id: "q1_1", pts: 0.5, type: "code", mode: "python", stmt: "1. Écrire le code de la méthode <code>Total_Produit</code> de la classe <code>Produit</code>.", keys: ["return", "self.Prix", "*", "self.Quantite"], corr: "def Total_Produit(self):\n    return self.Prix * self.Quantite" },
+                    { id: "q1_2a", pts: 0.5, type: "code", mode: "python", stmt: "2.a. Créer les 2 premiers produits P1 et P2 (Alimentaire à 1.250 qte 4, et Electroménager à 1.700 qte 8).", keys: ["P1", "Produit", "1.25", "4", "P2", "1.7"], corr: "P1 = Produit(1.250, 4, 'Alimentaire')\nP2 = Produit(1.700, 8, 'Electroménager')" },
+                    { id: "q1_2b", pts: 0.5, type: "code", mode: "python", stmt: "2.b. Afficher le prix total du produit P1.", keys: ["print", "P1.Total_Produit()"], corr: "print(P1.Total_Produit())" },
+                    { id: "q1_3", pts: 1, type: "code", mode: "python", stmt: "3. Compléter la méthode <code>Total_categorie(self, cat)</code> de la classe Facture.", keys: ["s=0", "for", "self.LP", "if", ".Categorie", "==", "cat", "s=s+", "return s"], corr: "def Total_categorie(self, cat):\n    s = 0\n    for p in self.LP:\n        if p.Categorie == cat:\n            s = s + p.Total_Produit()\n    return s" },
+                    { id: "q1_4", pts: 0.5, type: "code", mode: "python", stmt: "4. Créer la facture F1 et y ajouter les produits P1 à P6.", keys: ["F1", "=", "Facture()", "F1.LP"], corr: "F1 = Facture()\nF1.LP = [P1, P2, P3, P4, P5, P6]" },
+                    { id: "q1_5", pts: 1, type: "code", mode: "python", stmt: "5. Compléter <code>total_facture(F, LC)</code> renvoyant la somme totale.", keys: ["s=0", "for", "in LC", "s=s+", "F.Total_categorie", "return s"], corr: "def total_facture(F, LC):\n    s = 0\n    for i in LC:\n        s = s + F.Total_categorie(i)\n    return s" },
+                    { id: "q1_B1", pts: 0.25, type: "text", stmt: "Partie B - 1. Que vaut consommations_martin[0] ? Quel est son type ?", keys: ["dictionnaire", "dict", "{'Année': 23"], corr: "Vaut {'Année': 23, 'Consommation': '6.8', 'Date': '03/01', 'Jour': 'Mardi'}. Type : Dictionnaire." },
+                    { id: "q1_B2", pts: 0.5, type: "code", mode: "python", stmt: "Partie B - 2. Écrire <code>week_end(jour)</code> renvoyant True si samedi ou dimanche.", keys: ["def week_end", "if", "['Jour']", "==", "'Samedi'", "'Dimanche'", "return"], corr: "def week_end(jour):\n    if jour['Jour'] == 'Samedi' or jour['Jour'] == 'Dimanche':\n        return True\n    return False" },
+                    { id: "q1_B3", pts: 1, type: "code", mode: "python", stmt: "Partie B - 3. Compléter <code>conso_maximale(consommations)</code>.", keys: ["float", "['Consommation']", ">", "res_maxi", "date =", "annee ="], corr: "if float(x['Consommation']) > res_maxi:\n    res_maxi = float(x['Consommation'])\n    date = x['Date']\n    annee = x['Année']" },
+                    { id: "q1_B4", pts: 1.25, type: "code", mode: "python", stmt: "Partie B - 4. Compléter <code>consommations_jours</code>.", keys: ["if j in d:", "d[j]=d[j]+float", "else:", "d[j]=float"], corr: "if j in d:\n    d[j] = d[j] + float(v['Consommation'])\nelse:\n    d[j] = float(v['Consommation'])" }
                 ]
             },
             {
-                id: "ex2",
-                title: "Exercice 2 : Bases de Données SQL (6.5 points)",
+                id: "ex2", title: "Exercice 2 : Bases de Données SQL (6.5 pts)",
                 questions: [
-                    {
-                        id: "q2_1a", type: "text", pts: 1.5,
-                        stmt: "1.a. Pour la relation VICTOIRE, quelles propositions peuvent être clé primaire ? Justifier. (IdPilote / IdPilote, CodeCircuit / IdPilote, CodeCircuit, Annee)",
-                        keys: ["IdPilote, CodeCircuit, Annee", "gagner plusieurs années", "plusieurs fois"],
-                        corr: "IdPilote : Non, un pilote gagne plusieurs courses. (IdPilote, CodeCircuit) : Non, un pilote peut gagner le même circuit plusieurs années. (IdPilote, CodeCircuit, Annee) : OUI, c'est la seule combinaison qui garantit l'unicité d'une victoire."
-                    },
-                    {
-                        id: "q2_1b", type: "text", pts: 1,
-                        stmt: "1.b. Citer une contrainte de domaine, de relation et de référence pour VICTOIRE.",
-                        keys: ["domaine", "type", "entier", "relation", "clé primaire", "unique", "référence", "clé étrangère", "exister"],
-                        corr: "Domaine : Annee doit être un Entier. Relation : Le triplet clé primaire (IdPilote, CodeCircuit, Annee) doit être unique et non nul. Référence : L'IdPilote doit exister dans la table PILOTE."
-                    },
-                    {
-                        id: "q2_2", type: "code", mode: "sql", pts: 1,
-                        stmt: "2. Écrire les requêtes SQL pour insérer le nouveau circuit C050 (Djeddah, Arabie Saoudite, 50 tours, 6175m).",
-                        keys: ["INSERT INTO", "CIRCUIT", "VALUES", "'C050'", "'circuit de la corniche de Djeddah'", "50", "6175"],
-                        corr: "INSERT INTO CIRCUIT (CodeCircuit, NomCir, PaysCir, NbTours, LongCir) VALUES ('C050', 'circuit de la corniche de Djeddah', 'Arabie Saoudite', 50, 6175);"
-                    },
-                    {
-                        id: "q2_3a", type: "code", mode: "sql", pts: 0.5,
-                        stmt: "3.a. Afficher les noms des circuits et pays hôtes de plus de 60 tours.",
-                        keys: ["SELECT", "NomCir", "PaysCir", "FROM", "CIRCUIT", "WHERE", "NbTours", ">", "60"],
-                        corr: "SELECT NomCir, PaysCir FROM CIRCUIT WHERE NbTours > 60;"
-                    },
-                    {
-                        id: "q2_3b", type: "code", mode: "sql", pts: 0.75,
-                        stmt: "3.b. Afficher la liste des circuits (NomCir, PaysCir, NbTours, LongCir) où 'Ferrari' a gagné en 2021.",
-                        keys: ["SELECT", "NomCir", "JOIN", "VICTOIRE", "MARQUEAUTO", "LibMarq = 'Ferrari'", "Annee = 2021"],
-                        corr: "SELECT NomCir, PaysCir, NbTours, LongCir FROM CIRCUIT JOIN VICTOIRE ON CIRCUIT.CodeCircuit = VICTOIRE.CodeCircuit JOIN MARQUEAUTO ON VICTOIRE.CodeMarq = MARQUEAUTO.CodeMarq WHERE LibMarq = 'Ferrari' AND Annee = 2021;"
-                    },
-                    {
-                        id: "q2_3c", type: "code", mode: "sql", pts: 0.75,
-                        stmt: "3.c. Afficher la longueur moyenne des circuits gagnés par 'Michael Schumacher'.",
-                        keys: ["SELECT", "AVG", "LongCir", "JOIN", "PILOTE", "NomPilote", "=", "'Michael Schumacher'"],
-                        corr: "SELECT AVG(LongCir) FROM CIRCUIT JOIN VICTOIRE ON CIRCUIT.CodeCircuit = VICTOIRE.CodeCircuit JOIN PILOTE ON VICTOIRE.IdPilote = PILOTE.IdPilote WHERE NomPilote = 'Michael Schumacher';"
-                    },
-                    {
-                        id: "q2_4", type: "code", mode: "sql", pts: 0.5,
-                        stmt: "4. Supprimer les victoires avant l'an 2000.",
-                        keys: ["DELETE", "FROM", "VICTOIRE", "WHERE", "Annee", "<", "2000"],
-                        corr: "DELETE FROM VICTOIRE WHERE Annee < 2000;"
-                    },
-                    {
-                        id: "q2_5", type: "code", mode: "sql", pts: 0.5,
-                        stmt: "5. Mettre à jour 'Alpha Tauri' en 'Visa Cash App RB'.",
-                        keys: ["UPDATE", "MARQUEAUTO", "SET", "LibMarq", "=", "'Visa Cash App RB'", "WHERE", "'Alpha Tauri'"],
-                        corr: "UPDATE MARQUEAUTO SET LibMarq = 'Visa Cash App RB' WHERE LibMarq = 'Alpha Tauri';"
-                    }
+                    { id: "q2_1a", pts: 1.5, type: "text", stmt: "1.a. Quelle proposition peut être clé primaire pour VICTOIRE ? Justifier.", keys: ["(IdPilote, CodeCircuit, Annee)", "même circuit", "plusieurs années"], corr: "Seul le triplet (IdPilote, CodeCircuit, Annee) garantit l'unicité car un pilote peut gagner le même circuit lors d'années différentes." },
+                    { id: "q2_1b", pts: 1, type: "text", stmt: "1.b. Citer une contrainte d'intégrité de domaine, de relation et de référence.", keys: ["domaine", "type", "entier", "relation", "clé primaire", "unique", "référence", "clé étrangère"], corr: "Domaine : Annee est un Entier. Relation : La clé primaire doit être unique et non nulle. Référence : L'IdPilote inséré doit exister dans la table PILOTE." },
+                    { id: "q2_2", pts: 1, type: "code", mode: "sql", stmt: "2. Écrire la requête SQL pour insérer le nouveau circuit C050 de Djeddah.", keys: ["INSERT INTO", "CIRCUIT", "VALUES", "'C050'", "'circuit de la corniche de Djeddah'", "50", "6175"], corr: "INSERT INTO CIRCUIT (CodeCircuit, NomCir, PaysCir, NbTours, LongCir) VALUES ('C050', 'circuit de la corniche de Djeddah', 'Arabie Saoudite', 50, 6175);" },
+                    { id: "q2_3a", pts: 0.5, type: "code", mode: "sql", stmt: "3.a. Afficher noms et pays des circuits de plus de 60 tours.", keys: ["SELECT", "NomCir", "PaysCir", "FROM", "CIRCUIT", "WHERE", "NbTours", ">", "60"], corr: "SELECT NomCir, PaysCir FROM CIRCUIT WHERE NbTours > 60;" },
+                    { id: "q2_3b", pts: 0.75, type: "code", mode: "sql", stmt: "3.b. Afficher les circuits où 'Ferrari' a gagné en 2021.", keys: ["SELECT", "NomCir", "JOIN", "VICTOIRE", "MARQUEAUTO", "LibMarq", "=", "'Ferrari'", "Annee", "=", "2021"], corr: "SELECT NomCir, PaysCir, NbTours, LongCir FROM CIRCUIT JOIN VICTOIRE ON CIRCUIT.CodeCircuit = VICTOIRE.CodeCircuit JOIN MARQUEAUTO ON VICTOIRE.CodeMarq = MARQUEAUTO.CodeMarq WHERE LibMarq = 'Ferrari' AND Annee = 2021;" },
+                    { id: "q2_3c", pts: 0.75, type: "code", mode: "sql", stmt: "3.c. Longueur moyenne des circuits gagnés par 'Michael Schumacher'.", keys: ["SELECT", "AVG", "LongCir", "JOIN", "PILOTE", "NomPilote", "=", "'Michael Schumacher'"], corr: "SELECT AVG(LongCir) FROM CIRCUIT JOIN VICTOIRE ON CIRCUIT.CodeCircuit = VICTOIRE.CodeCircuit JOIN PILOTE ON VICTOIRE.IdPilote = PILOTE.IdPilote WHERE NomPilote = 'Michael Schumacher';" },
+                    { id: "q2_4", pts: 0.5, type: "code", mode: "sql", stmt: "4. Supprimer les victoires avant l'an 2000.", keys: ["DELETE", "FROM", "VICTOIRE", "WHERE", "Annee", "<", "2000"], corr: "DELETE FROM VICTOIRE WHERE Annee < 2000;" },
+                    { id: "q2_5", pts: 0.5, type: "code", mode: "sql", stmt: "5. Renommer l'écurie 'Alpha Tauri' en 'Visa Cash App RB'.", keys: ["UPDATE", "MARQUEAUTO", "SET", "LibMarq", "=", "'Visa Cash App RB'", "WHERE", "'Alpha Tauri'"], corr: "UPDATE MARQUEAUTO SET LibMarq = 'Visa Cash App RB' WHERE LibMarq = 'Alpha Tauri';" }
                 ]
             },
             {
-                id: "ex3",
-                title: "Exercice 3 : Graphes & Ordonnancement (6.5 points)",
+                id: "ex3", title: "Exercice 3 : Graphes & Système d'Exploitation (6.5 pts)",
                 questions: [
-                    {
-                        id: "q3_A1", type: "text", pts: 0.5,
-                        stmt: "Partie A - 1. Proposer une implémentation en Python du graphe G à l'aide d'un dictionnaire.",
-                        keys: ["{'F':", "['B']", "'D':", "['A'", "'H'"],
-                        corr: "G = {'F': ['B'], 'B': ['F', 'D', 'A', 'C', 'G'], 'H': ['D'], 'D': ['H', 'B', 'A', 'E'], 'A': ['B', 'D', 'C', 'E'], 'C': ['B', 'A', 'G', 'E'], 'G': ['B', 'C'], 'E': ['D', 'A', 'C', 'I'], 'I': ['E']}"
-                    },
-                    {
-                        id: "q3_A2a", type: "text", pts: 1,
-                        stmt: "Partie A - 2.a. Résultat de <code>print(Parcours1(G,'F'))</code> (DFS récursif)",
-                        keys: ["F", "B", "A", "C", "E", "D", "H", "I", "G"],
-                        corr: "Parcours en profondeur (DFS) ordre alphabétique : ['F', 'B', 'A', 'C', 'E', 'D', 'H', 'I', 'G']"
-                    },
-                    {
-                        id: "q3_A2b", type: "text", pts: 1,
-                        stmt: "Partie A - 2.b. Résultat de <code>print(Parcours2(G,'H'))</code> (BFS avec File)",
-                        keys: ["H", "D", "A", "B", "E", "C", "F", "G", "I"],
-                        corr: "Parcours en largeur (BFS) : ['H', 'D', 'A', 'B', 'E', 'C', 'F', 'G', 'I']"
-                    },
-                    {
-                        id: "q3_A2c", type: "text", pts: 1,
-                        stmt: "Partie A - 2.c. Résultat de <code>print(Parcours3(G,'I'))</code> (DFS itératif Pile)",
-                        keys: ["I", "E", "D", "H", "B", "F", "A", "C", "G"],
-                        corr: "Parcours en profondeur itératif (Pile) : ['I', 'E', 'D', 'H', 'B', 'A', 'C', 'G', 'F'] (l'ordre exact dépend de l'empilement, souvent l'inverse de l'ordre alphabétique lors du dépilage)."
-                    },
-                    {
-                        id: "q3_B1a", type: "text", pts: 1.5,
-                        stmt: "Partie B - 1.a. Ordonnancement Tourniquet (RR) q=1. Saisir la séquence des processus exécutés (ex: P1 P2 P1...).",
-                        keys: ["P1", "P2", "P3", "P4"],
-                        corr: "Séquence Tourniquet (Quantum 1) : P1 P1 P1 P2 P1 P3 P2 P1 P4 P3 P2 P1 P4 P3 P2 P1 P2"
-                    },
-                    {
-                        id: "q3_B1b", type: "text", pts: 1.5,
-                        stmt: "Partie B - 1.b. Ordonnancement SRTF (Temps restant le plus court). Saisir la séquence.",
-                        keys: ["P1", "P3", "P4", "P2"],
-                        corr: "Séquence SRTF : P1 P1 P1 P3 P3 P3 P4 P4 P1 P1 P1 P1 P2 P2 P2 P2 P2"
-                    }
+                    { id: "q3_A1", pts: 0.5, type: "text", stmt: "Partie A - 1. Proposer l'implémentation en Python du graphe G à l'aide d'un dictionnaire.", keys: ["{'F':", "['B']", "'D':", "['H'", "'A'"], corr: "G = {'F': ['B'], 'B': ['F', 'D', 'A', 'C', 'G'], 'H': ['D'], 'D': ['H', 'B', 'A', 'E'], 'A': ['B', 'D', 'C', 'E'], 'C': ['B', 'A', 'G', 'E'], 'G': ['B', 'C'], 'E': ['D', 'A', 'C', 'I'], 'I': ['E']}" },
+                    { id: "q3_A2a", pts: 1, type: "text", stmt: "Partie A - 2.a. Résultat de <code>print(Parcours1(G,'F'))</code> (DFS récursif ordre alphabétique).", keys: ["F", "B", "A", "C", "E", "D", "H", "I", "G"], corr: "['F', 'B', 'A', 'C', 'E', 'D', 'H', 'I', 'G']" },
+                    { id: "q3_A2b", pts: 1, type: "text", stmt: "Partie A - 2.b. Résultat de <code>print(Parcours2(G,'H'))</code> (BFS file).", keys: ["H", "D", "A", "B", "E", "C", "F", "G", "I"], corr: "['H', 'D', 'A', 'B', 'E', 'C', 'F', 'G', 'I']" },
+                    { id: "q3_A2c", pts: 1, type: "text", stmt: "Partie A - 2.c. Résultat de <code>print(Parcours3(G,'I'))</code> (DFS itératif pile).", keys: ["I", "E", "D", "H", "B", "F", "A", "C", "G"], corr: "['I', 'E', 'D', 'H', 'B', 'A', 'C', 'G', 'F'] (Ordre de dépilage)" },
+                    { id: "q3_B1a", pts: 1.5, type: "text", stmt: "Partie B - 1.a. Ordonnancement Tourniquet (Quantum=1). Saisir la séquence des processus exécutés.", keys: ["P1", "P2", "P3", "P4"], corr: "P1 P1 P1 P2 P1 P3 P2 P1 P4 P3 P2 P1 P4 P3 P2 P1 P2" },
+                    { id: "q3_B1b", pts: 1.5, type: "text", stmt: "Partie B - 1.b. Ordonnancement Plus Court Temps Restant (SRTF). Saisir la séquence.", keys: ["P1", "P3", "P4", "P2"], corr: "P1 P1 P1 P3 P3 P3 P4 P4 P1 P1 P1 P1 P2 P2 P2 P2 P2" }
                 ]
             }
         ];
 
-        const MAX_SCORE = 20;
-
         /** =========================================================================
-         *  2. GESTION DE L'ÉTAT (STATE) & LOCALSTORAGE
+         *  1. GESTION DE L'ÉTAT LOCAL (LocalStorage)
          *  ========================================================================= */
-        const STORAGE_KEY = "NSI_Exam_LocalData";
+        const STORAGE_KEY = "BacBlancNSI_2024_Data";
         let state = {
             student: { nom: "", prenom: "", email: "", classe: "", startTime: "" },
             answers: {},
-            timeRemaining: EXAM_TIME,
-            status: "pending", // pending, running, submitted
+            timeRemaining: EXAM_DURATION,
+            status: "pending", 
             antiCheat: { tabs: 0, focus: 0, copyPaste: 0, logs: [] }
         };
 
         let timerInterval, autosaveInterval;
-        let cmEditors = {}; // Références aux instances CodeMirror
-        let isSelectingFile = false; // Flag pour l'anti-triche
+        let cmEditors = {};
+        let isFileSelecting = false; // Flag pour ignorer l'anti-triche pendant l'upload PDF
 
         function loadState() {
             const saved = localStorage.getItem(STORAGE_KEY);
@@ -462,35 +336,33 @@
         }
 
         function saveState() {
-            // Mettre à jour state.answers depuis CodeMirror avant la sauvegarde
             Object.keys(cmEditors).forEach(id => {
                 state.answers[id] = cmEditors[id].getValue();
             });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         }
 
-        function logSecurityEvent(type, message) {
-            if(state.status !== "running" || isSelectingFile) return;
-            
-            const timeStr = new Date().toLocaleTimeString('fr-FR');
-            state.antiCheat.logs.push(`[${timeStr}] ${message}`);
+        function logSecurity(type, msg) {
+            if(state.status !== "running" || isFileSelecting) return;
+            const time = new Date().toLocaleTimeString();
+            state.antiCheat.logs.push(`[${time}] ${msg}`);
             
             if(type === 'TAB') state.antiCheat.tabs++;
             if(type === 'FOCUS') state.antiCheat.focus++;
             if(type === 'COPYPASTE') state.antiCheat.copyPaste++;
             
             saveState();
-            showToast(`Alerte sécurité : ${message}`, "error");
+            showToast(`Alerte de Sécurité : ${msg}`, "error");
         }
 
         /** =========================================================================
-         *  3. INTERFACE UTILISATEUR (UI)
+         *  2. INTERFACE UTILISATEUR & UI
          *  ========================================================================= */
-        function showToast(message, type="info") {
+        function showToast(msg, type="info") {
             const container = document.getElementById('toasts');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            toast.innerText = message;
+            toast.innerText = msg;
             container.appendChild(toast);
             setTimeout(() => toast.remove(), 3300);
         }
@@ -513,34 +385,28 @@
                 });
             });
             const pct = Math.round((answered / total) * 100);
-            document.getElementById('progress-fill').style.width = pct + '%';
-            document.getElementById('ui-progress-text').innerText = `Progression : ${pct}% (${answered}/${total})`;
+            document.getElementById('progress-bar').style.width = pct + '%';
+            document.getElementById('ui-progress').innerText = `Progression : ${pct}%`;
         }
 
-        function renderQuestions() {
-            const container = document.getElementById('questions-container');
+        function renderExamUI() {
+            const container = document.getElementById('questions-area');
             container.innerHTML = "";
 
-            examData.forEach((ex, exIndex) => {
+            examData.forEach(ex => {
                 const block = document.createElement('div');
-                block.className = "exercise-block";
-                
-                block.innerHTML = `<h2 class="exercise-title">
-                    <span>${ex.title}</span>
-                </h2>`;
+                block.className = "exercise-card";
+                block.innerHTML = `<h2 class="ex-title">${ex.title}</h2>`;
 
                 ex.questions.forEach(q => {
                     const qDiv = document.createElement('div');
-                    qDiv.className = "question-card";
-                    
-                    qDiv.innerHTML = `<div class="question-statement">
-                        <strong>${q.pts} pts</strong> ${q.stmt}
-                    </div>`;
+                    qDiv.className = "question";
+                    qDiv.innerHTML = `<div class="q-stmt"><span class="q-pts">${q.pts} pts</span> ${q.stmt}</div>`;
 
                     if(q.type === "text") {
                         const ta = document.createElement('textarea');
-                        ta.className = "text-answer";
-                        ta.placeholder = "Saisissez votre réponse textuelle ici...";
+                        ta.className = "text-ans";
+                        ta.placeholder = "Saisissez votre réponse ici...";
                         ta.value = state.answers[q.id] || "";
                         ta.addEventListener('input', (e) => {
                             state.answers[q.id] = e.target.value;
@@ -549,14 +415,14 @@
                         qDiv.appendChild(ta);
                     } 
                     else if (q.type === "code") {
-                        const cmContainer = document.createElement('div');
-                        cmContainer.className = "cm-container";
+                        const cmWrap = document.createElement('div');
+                        cmWrap.className = "cm-wrapper";
                         const ta = document.createElement('textarea');
                         ta.id = `cm-${q.id}`;
-                        cmContainer.appendChild(ta);
-                        qDiv.appendChild(cmContainer);
+                        cmWrap.appendChild(ta);
+                        qDiv.appendChild(cmWrap);
 
-                        // Initialisation différée de CodeMirror
+                        // Initialisation différée CodeMirror
                         setTimeout(() => {
                             const editor = CodeMirror.fromTextArea(document.getElementById(`cm-${q.id}`), {
                                 mode: q.mode === "sql" ? "text/x-sql" : "python",
@@ -578,72 +444,110 @@
         }
 
         /** =========================================================================
-         *  4. LECTEUR PDF HORS-LIGNE & ANTI-TRICHE
+         *  3. LECTEUR PDF.JS INTÉGRÉ
          *  ========================================================================= */
-        
-        // Gestion de l'input File PDF (No Server required)
-        document.getElementById('pdf-input').addEventListener('click', () => {
-            isSelectingFile = true; // Empêche l'anti-triche de s'activer
+        let pdfDoc = null, pageNum = 1, pageRendering = false, pageNumPending = null, scale = 1.3;
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function renderPage(num) {
+            pageRendering = true;
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: scale });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderCtx = { canvasContext: ctx, viewport: viewport };
+                page.render(renderCtx).promise.then(() => {
+                    pageRendering = false;
+                    if(pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                });
+            });
+            document.getElementById('page_num').textContent = num;
+        }
+
+        function queueRenderPage(num) {
+            if(pageRendering) pageNumPending = num;
+            else renderPage(num);
+        }
+
+        document.getElementById('pdf-prev').addEventListener('click', () => {
+            if(pageNum <= 1) return;
+            pageNum--; queueRenderPage(pageNum);
+        });
+
+        document.getElementById('pdf-next').addEventListener('click', () => {
+            if(pageNum >= pdfDoc.numPages) return;
+            pageNum++; queueRenderPage(pageNum);
+        });
+
+        document.getElementById('pdf-zoom-in').addEventListener('click', () => {
+            scale += 0.2; queueRenderPage(pageNum);
+        });
+
+        document.getElementById('pdf-zoom-out').addEventListener('click', () => {
+            if(scale <= 0.6) return;
+            scale -= 0.2; queueRenderPage(pageNum);
+        });
+
+        // Chargement du fichier
+        document.getElementById('pdf-file').addEventListener('click', () => {
+            isFileSelecting = true;
         });
 
         window.addEventListener('focus', () => {
-            if(isSelectingFile) setTimeout(() => isSelectingFile = false, 1000);
+            if(isFileSelecting) setTimeout(() => isFileSelecting = false, 1000);
         });
 
-        document.getElementById('pdf-input').addEventListener('change', function(e) {
+        document.getElementById('pdf-file').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if(file && file.type === "application/pdf") {
-                const objectURL = URL.createObjectURL(file);
-                document.getElementById('pdf-upload-ui').classList.add('hidden');
-                
-                const iframe = document.getElementById('pdf-iframe');
-                iframe.src = objectURL + "#toolbar=0&navpanes=0&scrollbar=0"; 
-                iframe.classList.remove('hidden');
-                
-                document.getElementById('pdf-status').innerHTML = '<span style="color:var(--success);">✅ Chargé</span>';
+                const fileReader = new FileReader();
+                fileReader.onload = function() {
+                    const typedarray = new Uint8Array(this.result);
+                    pdfjsLib.getDocument(typedarray).promise.then(pdf => {
+                        pdfDoc = pdf;
+                        document.getElementById('page_count').textContent = pdf.numPages;
+                        document.getElementById('pdf-upload-overlay').classList.add('hidden');
+                        renderPage(pageNum);
+                    });
+                };
+                fileReader.readAsArrayBuffer(file);
             }
         });
 
-        // Anti-triche
-        function setupAntiCheat() {
-            // Empêcher copier/couper/coller
-            document.addEventListener('copy', e => { e.preventDefault(); logSecurityEvent('COPYPASTE', 'Tentative de copie'); });
-            document.addEventListener('cut', e => { e.preventDefault(); logSecurityEvent('COPYPASTE', 'Tentative de coupe'); });
-            document.addEventListener('paste', e => { e.preventDefault(); logSecurityEvent('COPYPASTE', 'Tentative de collage'); });
-            document.addEventListener('contextmenu', e => { e.preventDefault(); logSecurityEvent('COPYPASTE', 'Clic droit interdit'); });
+        /** =========================================================================
+         *  4. SÉCURITÉ & CYCLE DE VIE
+         *  ========================================================================= */
+        function initSecurity() {
+            document.addEventListener('copy', e => { e.preventDefault(); logSecurity('COPYPASTE', 'Copie interdite'); });
+            document.addEventListener('cut', e => { e.preventDefault(); logSecurity('COPYPASTE', 'Coupe interdite'); });
+            document.addEventListener('paste', e => { e.preventDefault(); logSecurity('COPYPASTE', 'Collage interdit'); });
+            document.addEventListener('contextmenu', e => { e.preventDefault(); logSecurity('COPYPASTE', 'Clic droit interdit'); });
 
-            // Sortie onglet / focus
             document.addEventListener('visibilitychange', () => {
-                if(document.hidden) logSecurityEvent('TAB', "L'élève a quitté l'onglet de l'examen");
+                if(document.hidden) logSecurity('TAB', 'Changement d\'onglet détecté');
             });
             window.addEventListener('blur', () => {
-                logSecurityEvent('FOCUS', "La fenêtre d'examen a perdu le focus");
+                logSecurity('FOCUS', 'Perte de focus de la page');
             });
-
-            // Plein écran
             document.addEventListener('fullscreenchange', () => {
                 if(!document.fullscreenElement && state.status === "running") {
-                    logSecurityEvent('FOCUS', "Sortie du mode plein écran");
-                    showToast("Veuillez repasser en plein écran pour continuer.", "error");
+                    logSecurity('FOCUS', 'Sortie du mode plein écran');
+                    showToast("Plein écran obligatoire !", "error");
                 }
             });
         }
 
-        function requestFullscreen() {
-            if(document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(e=>console.warn(e));
-            }
-        }
-
-        /** =========================================================================
-         *  5. CYCLE DE VIE DE L'EXAMEN
-         *  ========================================================================= */
         function startExam() {
             state.student.nom = document.getElementById('nom').value.trim();
             state.student.prenom = document.getElementById('prenom').value.trim();
             state.student.email = document.getElementById('email').value.trim();
             state.student.classe = document.getElementById('classe').value.trim();
-            state.student.startTime = document.getElementById('time-display').value;
+            state.student.startTime = document.getElementById('datetime').value;
             
             state.status = "running";
             saveState();
@@ -651,52 +555,44 @@
             document.getElementById('screen-welcome').classList.add('hidden');
             document.getElementById('screen-exam').classList.remove('hidden');
             
-            document.getElementById('ui-student-name').innerText = `${state.student.prenom} ${state.student.nom}`;
-            document.getElementById('ui-student-name').nextElementSibling.innerText = state.student.classe;
+            document.getElementById('ui-name').innerText = `${state.student.prenom} ${state.student.nom} (${state.student.classe})`;
 
-            requestFullscreen();
-            renderQuestions();
-            setupAntiCheat();
+            if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
 
-            // Lancement Chrono
+            renderExamUI();
+            initSecurity();
+
             timerInterval = setInterval(() => {
                 state.timeRemaining--;
-                document.getElementById('timer-text').innerText = formatTime(state.timeRemaining);
-                
-                const badge = document.getElementById('timer-badge');
-                if(state.timeRemaining <= 300) badge.classList.add('warning');
-                
-                if(state.timeRemaining <= 0) {
-                    showToast("Temps écoulé ! Soumission automatique.", "error");
-                    submitExam(true);
-                }
+                document.getElementById('timer-display').innerText = formatTime(state.timeRemaining);
+                if(state.timeRemaining <= 300) document.getElementById('timer-display').classList.add('warning');
+                if(state.timeRemaining <= 0) submitCopy(true);
             }, 1000);
 
-            // Autosave 10s
             autosaveInterval = setInterval(() => {
                 saveState();
-                showToast("💾 Sauvegarde auto", "success");
+                showToast("Sauvegarde automatique 💾", "success");
             }, 10000);
         }
 
         /** =========================================================================
-         *  6. CORRECTION ET NOTATION AUTOMATIQUE
+         *  5. CORRECTION & RÉSULTATS
          *  ========================================================================= */
-        function gradeAnswer(answer, keywords) {
-            if(!answer || answer.trim() === "") return 0;
-            const ansNorm = answer.toLowerCase().replace(/[\n\r\s]+/g, ' ');
-            let matches = 0;
-            keywords.forEach(k => {
-                if(ansNorm.includes(k.toLowerCase().replace(/[\n\r\s]+/g, ' '))) matches++;
+        function grade(ans, keys) {
+            if(!ans || ans.trim() === "") return 0;
+            const nAns = ans.toLowerCase().replace(/[\n\r\s]+/g, ' ');
+            let match = 0;
+            keys.forEach(k => {
+                if(nAns.includes(k.toLowerCase().replace(/[\n\r\s]+/g, ' '))) match++;
             });
-            return matches / keywords.length; // Ratio 0 -> 1
+            return match / keys.length;
         }
 
-        let finalReportData = [];
+        let pdfExportData = [];
 
-        function submitExam(isAuto = false) {
+        function submitCopy(isAuto = false) {
             if(state.status !== "running") return;
-            if(!isAuto && !confirm("Confirmez-vous la soumission définitive de votre copie ?")) return;
+            if(!isAuto && !confirm("Confirmer la remise définitive de la copie ?")) return;
 
             clearInterval(timerInterval);
             clearInterval(autosaveInterval);
@@ -705,157 +601,133 @@
 
             if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
 
-            // LOGIQUE DE CORRECTION
-            let totalPoints = 0;
-            let earnedPoints = 0;
-            finalReportData = [];
-
-            const container = document.getElementById('correction-container');
-            container.innerHTML = "";
+            let tPts = 0, ePts = 0;
+            const corrDiv = document.getElementById('correction-area');
+            corrDiv.innerHTML = "";
+            pdfExportData = [];
 
             examData.forEach(ex => {
                 ex.questions.forEach(q => {
-                    totalPoints += q.pts;
+                    tPts += q.pts;
                     let ans = state.answers[q.id] || "";
-                    let ratio = gradeAnswer(ans, q.keys);
-                    let pts = 0;
-                    let badgeClass = "ko"; let badgeText = "Incorrect";
+                    let ratio = grade(ans, q.keys);
+                    let p = 0, bCls = "ko", bTxt = "Incorrect";
 
-                    if(ratio >= 0.7) { pts = q.pts; badgeClass = "ok"; badgeText = "Correct"; }
-                    else if(ratio >= 0.3) { pts = q.pts / 2; badgeClass = "partial"; badgeText = "Partiel"; }
+                    if(ratio >= 0.75) { p = q.pts; bCls = "ok"; bTxt = "Correct"; }
+                    else if(ratio >= 0.3) { p = q.pts/2; bCls = "part"; bTxt = "Partiel"; }
+                    ePts += p;
 
-                    earnedPoints += pts;
+                    pdfExportData.push({ q: q.stmt.replace(/<[^>]*>?/gm, ''), a: ans, c: q.corr, p: p, max: q.pts });
 
-                    // Sauvegarde pour le PDF
-                    finalReportData.push({
-                        q: q.stmt.replace(/<[^>]*>?/gm, ''), // strip html
-                        ans: ans, corr: q.corr,
-                        pts: pts, max: q.pts
-                    });
-
-                    // UI HTML
-                    const box = document.createElement('div');
-                    box.className = "correction-box";
-                    box.innerHTML = `
-                        <div class="corr-header">
-                            <span style="flex-grow:1; margin-right:15px; font-size:0.9rem;">${q.stmt}</span>
-                            <span class="status-badge ${badgeClass}">${badgeText} : ${pts}/${q.pts} pts</span>
-                        </div>
-                        <div class="corr-body">
-                            <div class="ans-block">
-                                <span>Votre réponse</span>
-                                <div class="ans-content">${ans || "<em>(Aucune réponse)</em>"}</div>
+                    corrDiv.innerHTML += `
+                        <div class="corr-box">
+                            <div class="corr-header">
+                                <span style="font-size:0.95rem; font-weight:normal;">${q.stmt}</span>
+                                <span class="badge ${bCls}">${bTxt} : ${p}/${q.pts}</span>
                             </div>
-                            <div class="ans-block">
-                                <span>Correction attendue</span>
-                                <div class="corr-content">${q.corr}</div>
+                            <div class="corr-body">
+                                <strong>Votre réponse :</strong>
+                                <div class="ans-user">${ans || "(Aucune réponse)"}</div>
+                                <strong>Correction :</strong>
+                                <div class="ans-corr">${q.corr}</div>
                             </div>
                         </div>
                     `;
-                    container.appendChild(box);
                 });
             });
 
-            // Calcul Note finale (Mise à l'échelle sur 20)
-            const note20 = (earnedPoints / totalPoints) * 20;
-            const pct = Math.round((earnedPoints / totalPoints) * 100);
+            const note20 = (ePts / 20) * 20; // Le sujet fait 20 pts (7+6.5+6.5)
+            const pct = Math.round((ePts/20)*100);
             
-            document.getElementById('res-score').innerText = `${note20.toFixed(1)} / 20`;
-            document.getElementById('res-percent').innerText = `Taux de réussite : ${pct}% (Points bruts : ${earnedPoints}/${totalPoints})`;
+            document.getElementById('final-score').innerText = `${note20.toFixed(1)}/20`;
+            document.getElementById('final-pct').innerText = `Taux de réussite : ${pct}%`;
 
             let app = "Insuffisant";
             if(note20 >= 16) app = "Excellent 🌟";
             else if(note20 >= 14) app = "Bien 👍";
             else if(note20 >= 12) app = "Assez Bien";
             else if(note20 >= 10) app = "Passable";
-            document.getElementById('res-appreciation').innerText = app;
+            document.getElementById('final-app').innerText = app;
 
-            // Affichage logs sécurité
-            const logUl = document.getElementById('res-logs');
+            const logUl = document.getElementById('anti-cheat-logs');
             logUl.innerHTML = `
-                <li><span>Sorties d'onglet détectées :</span> <strong>${state.antiCheat.tabs}</strong></li>
-                <li><span>Pertes de focus fenêtre :</span> <strong>${state.antiCheat.focus}</strong></li>
-                <li><span>Tentatives de triche (Copier/Coller) :</span> <strong>${state.antiCheat.copyPaste}</strong></li>
+                <li><span>Changements d'onglets</span> <strong>${state.antiCheat.tabs}</strong></li>
+                <li><span>Pertes de focus</span> <strong>${state.antiCheat.focus}</strong></li>
+                <li><span>Tentatives Copier/Coller</span> <strong>${state.antiCheat.copyPaste}</strong></li>
             `;
             state.antiCheat.logs.forEach(l => {
-                const li = document.createElement('li');
-                li.style.fontSize = "0.85rem"; li.style.color = "#d97706";
-                li.innerText = l;
-                logUl.appendChild(li);
+                logUl.innerHTML += `<li style="font-size:0.85rem; color:#d97706;">${l}</li>`;
             });
 
             document.getElementById('screen-exam').classList.add('hidden');
             document.getElementById('screen-results').classList.remove('hidden');
-            window.scrollTo(0,0);
         }
 
         /** =========================================================================
-         *  7. EXPORT PDF JSPDF
+         *  6. EXPORT PDF JSPDF
          *  ========================================================================= */
-        document.getElementById('btn-export-pdf').addEventListener('click', () => {
+        document.getElementById('btn-download').addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             let y = 20;
 
             doc.setFontSize(18);
-            doc.setTextColor(15, 23, 42);
+            doc.setTextColor(30, 58, 138);
             doc.text("Copie Corrigée - NSI Bac Blanc 2024", 105, y, { align: "center" });
             y += 15;
 
             doc.setFontSize(11);
-            doc.setFont("helvetica", "normal");
+            doc.setTextColor(51, 65, 85);
             doc.text(`Élève : ${state.student.nom} ${state.student.prenom} (${state.student.classe})`, 20, y); y += 6;
             doc.text(`Email : ${state.student.email}`, 20, y); y += 6;
             doc.text(`Date : ${state.student.startTime}`, 20, y); y += 15;
 
             doc.setFontSize(14);
             doc.setFont("helvetica", "bold");
-            const noteFinale = document.getElementById('res-score').innerText;
-            doc.text(`NOTE FINALE : ${noteFinale} - ${document.getElementById('res-appreciation').innerText}`, 20, y); y += 15;
+            doc.text(`NOTE FINALE : ${document.getElementById('final-score').innerText} - ${document.getElementById('final-app').innerText}`, 20, y); y += 15;
 
-            // Encadré Sécurité
             doc.setFillColor(254, 243, 199);
-            doc.rect(20, y-6, 170, 20, "F");
+            doc.rect(20, y-6, 170, 15, "F");
             doc.setFontSize(10);
             doc.setTextColor(180, 83, 9);
-            doc.text(`Rapport Sécurité : ${state.antiCheat.tabs} sortie(s) d'onglet | ${state.antiCheat.focus} perte(s) de focus | ${state.antiCheat.copyPaste} tentative(s) Copier/Coller`, 25, y+2);
-            y += 25;
+            doc.text(`Sécurité : ${state.antiCheat.tabs} sortie(s) | ${state.antiCheat.focus} focus | ${state.antiCheat.copyPaste} C/P`, 25, y+3);
+            y += 20;
 
-            doc.setTextColor(15, 23, 42);
+            doc.setTextColor(51, 65, 85);
             
-            finalReportData.forEach((item, idx) => {
+            pdfExportData.forEach((item, i) => {
                 if (y > 260) { doc.addPage(); y = 20; }
                 
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(10);
-                const qText = doc.splitTextToSize(`Q${idx+1} : ${item.q}`, 170);
-                doc.text(qText, 20, y);
-                y += (qText.length * 5) + 3;
+                const qLines = doc.splitTextToSize(`Q${i+1} : ${item.q}`, 170);
+                doc.text(qLines, 20, y);
+                y += (qLines.length * 5) + 3;
 
                 doc.setFont("helvetica", "normal");
-                const ansText = doc.splitTextToSize(`Réponse élève : ${item.ans.replace(/\n/g, ' ')}`, 160);
-                doc.text(ansText, 25, y);
-                y += (ansText.length * 5) + 3;
+                const aLines = doc.splitTextToSize(`Rép : ${item.a.replace(/\n/g, ' ')}`, 160);
+                doc.text(aLines, 25, y);
+                y += (aLines.length * 5) + 3;
 
-                doc.setTextColor(16, 185, 129); // Vert
-                const corrText = doc.splitTextToSize(`Correction (${item.pts}/${item.max} pts) : ${item.corr.replace(/\n/g, ' ')}`, 160);
-                doc.text(corrText, 25, y);
-                doc.setTextColor(15, 23, 42); // Reset
-                y += (corrText.length * 5) + 10;
+                doc.setTextColor(16, 185, 129);
+                const cLines = doc.splitTextToSize(`Corr (${item.p}/${item.max} pts) : ${item.c.replace(/\n/g, ' ')}`, 160);
+                doc.text(cLines, 25, y);
+                doc.setTextColor(51, 65, 85);
+                y += (cLines.length * 5) + 8;
             });
 
-            doc.save(`Copie_NSI_${state.student.nom}_${state.student.prenom}.pdf`);
+            doc.save(`NSI_Copie_${state.student.nom}_${state.student.prenom}.pdf`);
         });
 
         /** =========================================================================
-         *  8. INITIALISATION (DÉMARRAGE)
+         *  7. INITIALISATION
          *  ========================================================================= */
         document.addEventListener("DOMContentLoaded", () => {
-            document.getElementById('time-display').value = new Date().toLocaleString('fr-FR');
+            document.getElementById('datetime').value = new Date().toLocaleString('fr-FR');
             
             loadState();
             if(state.status === "running") {
-                if(confirm("Une session d'examen a été interrompue. Voulez-vous la reprendre ?")) {
+                if(confirm("Une session est en cours. Voulez-vous la reprendre ?")) {
                     document.getElementById('nom').value = state.student.nom;
                     document.getElementById('prenom').value = state.student.prenom;
                     document.getElementById('email').value = state.student.email;
@@ -864,14 +736,19 @@
                 } else {
                     localStorage.removeItem(STORAGE_KEY);
                 }
+            } else if (state.status === "submitted") {
+                // Bloquer si déjà soumis
+                document.getElementById('screen-welcome').classList.add('hidden');
+                document.getElementById('screen-results').classList.remove('hidden');
+                // Note: la regénération pure du score depuis localStorage pourrait être ajoutée ici si besoin.
             }
 
-            document.getElementById('start-form').addEventListener('submit', (e) => {
+            document.getElementById('form-start').addEventListener('submit', (e) => {
                 e.preventDefault();
                 startExam();
             });
 
-            document.getElementById('btn-submit').addEventListener('click', () => submitExam(false));
+            document.getElementById('btn-submit').addEventListener('click', () => submitCopy(false));
         });
 
     </script>
